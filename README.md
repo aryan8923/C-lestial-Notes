@@ -9,9 +9,9 @@ I will be writing the functions and upload them under [GNU GPLv3.0](https://www.
 `gcc` is required to compile the necessary code. One can use any other compiler if they wish.
 
 ## Usage
-Download the `c_lestial_library` folder from the git repo. Put the folder wherever you want. While compiling the code using `gcc`, use:
-```gcc -Idirectory/where/library/is -o output yourfile.c path/to/includedfile1.c path/to/includedfile2.c ```
 
-For example, if you are using `linalg.c` from the library and your file name is main.c:
-`gcc -Idirectory/where/library/is -o output main.c path/to/linalg.c`
+Download the `c_lestial_library` folder from the git repo. Put the folder wherever your main file is. Set the TARGET variable in the Makefile to your file's name (by default set to main.c) Keep the Makefile in the same folder as your code. 
+
+
+Run ```make``` in terminal. The code by default compiles to "output". (You can rename the output file by setting the OUTPUT variable in Makefile)
 
