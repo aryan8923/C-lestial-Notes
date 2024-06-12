@@ -1,20 +1,4 @@
-/*This file is part of C-lestial library
-(https://github.com/aryan8923/C-lestial-Notes).
-
-C-lestial library is free software: you can redistribute it and/or
-modify it under the terms of the GNU General Public License as published by the
-Free Software Foundation, either version 3 of the License, or (at your option)
-any later version.
-
-C-lestial library is distributed in the hope that it will be useful,
-but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-or FITNESS FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
-details.
-
-You should have received a copy of the GNU General Public License along with
-C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
-*/
-
+#include "array/array.h"
 #include "prec.h"
 #include <stdio.h>
 #include <stdlib.h>
@@ -73,15 +57,15 @@ DataFrame *init_df(int nrows, int ncolumns) {
   df->num_columns = ncolumns;
   df->num_rows = nrows;
 
-  size_t dataframe_size = sizeof(DataFrame) + (ncolumns * sizeof(Column));
-  for (int i = 0; i < ncolumns; i++) {
-    dataframe_size += sizeof(df->columns[i].label);
-    dataframe_size += sizeof(df->columns[i].dtype);
-    dataframe_size += sizeof(df->columns[i].data);
-  }
+  // Calculate the size of allocated memory
+  size_t bytes_allocated = sizeof(DataFrame) + ncolumns * sizeof(Column);
+  bytes_allocated +=
+      nrows * ncolumns * (sizeof(int) + sizeof(precision_t) + sizeof(char *));
+  float megabytes_allocated = (float)bytes_allocated / (1024 * 1024);
 
-  printf("Initialsed DataFrame (%zu bytes (~%.4f MB))\n", dataframe_size,
-         dataframe_size / (1024.0 * 1024.0));
+  // Print the size of allocated memory
+  printf("Initialised data frame (%zu bytes (~%.4f MB))\n", bytes_allocated,
+         megabytes_allocated);
 
   return df;
 }
@@ -138,6 +122,9 @@ void set_str_value_df(DataFrame *df, int row_index, int col_index,
 }
 
 void free_df(DataFrame *df) {
+  const int ncols = df->num_columns;
+  const int nrows = df->num_rows;
+
   for (int i = 0; i < df->num_columns; i++) {
     free(df->columns[i].label);
     switch (df->columns[i].dtype) {
@@ -157,12 +144,32 @@ void free_df(DataFrame *df) {
   }
   free(df->columns);
   free(df);
+
+  // Calculate the size of allocated memory
+  size_t bytes_freed = sizeof(DataFrame) + ncols * sizeof(Column);
+  bytes_freed +=
+      nrows * ncols * (sizeof(int) + sizeof(precision_t) + sizeof(char *));
+  float megabytes_freed = (float)bytes_freed / (1024 * 1024);
+
+  // Print the size of allocated memory
+  printf("Freed data frame (%zu bytes (~%.4f MB))\n", bytes_freed,
+         megabytes_freed);
 }
 
-void view_df(DataFrame *df) {
+void view_df(DataFrame *df, int padding) {
+  // Finding the padding length
+  int max_str_len = strlen(df->columns[0].label);
+
+  for (int i = 0; i < df->num_columns; i++) {
+    if (max_str_len < strlen(df->columns[i].label)) {
+      max_str_len = strlen(df->columns[i].label);
+    }
+  }
+  max_str_len += 2;
+
   // Print column headers
   for (int i = 0; i < df->num_columns; i++) {
-    printf("%-10s", df->columns[i].label);
+    printf("%-*s", max_str_len, df->columns[i].label);
   }
   printf("\n");
 
@@ -171,16 +178,16 @@ void view_df(DataFrame *df) {
     for (int col = 0; col < df->num_columns; col++) {
       switch (df->columns[col].dtype) {
       case INT:
-        printf("%-10d", df->columns[col].data.int_data[row]);
+        printf("%-*d", max_str_len, df->columns[col].data.int_data[row]);
         break;
       case PREC:
-        printf("%-10.2f", df->columns[col].data.prec_data[row]);
+        printf("%-*.2f", max_str_len, df->columns[col].data.prec_data[row]);
         break;
       case STRING:
         if (df->columns[col].data.string_data[row]) {
-          printf("%-10s", df->columns[col].data.string_data[row]);
+          printf("%-*s", max_str_len, df->columns[col].data.string_data[row]);
         } else {
-          printf("%-10s", "NULL");
+          printf("%-*s", max_str_len, "NULL");
         }
         break;
       }
@@ -231,7 +238,6 @@ DataFrame *load_csv(const char *filename, const char *sep) {
     fprintf(stderr, "Error opening file %s\n", filename);
     return NULL;
   }
-
   char line[1024]; // Assuming max line length is 1024 characters
   if (fgets(line, sizeof(line), file) == NULL) {
     fprintf(stderr, "Error reading header from file %s\n", filename);
@@ -271,7 +277,9 @@ DataFrame *load_csv(const char *filename, const char *sep) {
 
   // Read remaining rows and populate DataFrame
   int row_index = 0;
+
   // Skip the first line which contains column names
+
   fgets(line, sizeof(line), file);
   while (fgets(line, sizeof(line), file) != NULL) {
     token = strtok(line, sep);
@@ -294,4 +302,94 @@ DataFrame *load_csv(const char *filename, const char *sep) {
 
   fclose(file);
   return df;
+}
+
+void info_df(DataFrame *df) {
+  printf("Total entries: %d\n", df->num_rows);
+  int dtype;
+  printf("%10s%-10s%-10s\n", "#", "Column", "dtype");
+  for (int i = 0; i < df->num_columns; i++) {
+    dtype = df->columns[i].dtype;
+    printf("%-10d%-10s%-10d\n", i, df->columns[i].label, dtype);
+  }
+}
+
+void head_df(DataFrame *df, int nrows) {
+  // Finding the padding length
+  int max_str_len = strlen(df->columns[0].label);
+
+  for (int i = 0; i < df->num_columns; i++) {
+    if (max_str_len < strlen(df->columns[i].label)) {
+      max_str_len = strlen(df->columns[i].label);
+    }
+  }
+  max_str_len += 2;
+
+  // Print column headers
+  for (int i = 0; i < df->num_columns; i++) {
+    printf("%-*s", max_str_len, df->columns[i].label);
+  }
+  printf("\n");
+
+  // Print rows
+  for (int row = 0; row < nrows; row++) {
+    for (int col = 0; col < df->num_columns; col++) {
+      switch (df->columns[col].dtype) {
+      case INT:
+        printf("%-*d", max_str_len, df->columns[col].data.int_data[row]);
+        break;
+      case PREC:
+        printf("%-*.2f", max_str_len, df->columns[col].data.prec_data[row]);
+        break;
+      case STRING:
+        if (df->columns[col].data.string_data[row]) {
+          printf("%-*s", max_str_len, df->columns[col].data.string_data[row]);
+        } else {
+          printf("%-*s", max_str_len, "NULL");
+        }
+        break;
+      }
+    }
+    printf("\n");
+  }
+}
+
+void tail_df(DataFrame *df, int nrows) {
+  // Finding the padding length
+  int max_str_len = strlen(df->columns[0].label);
+
+  for (int i = 0; i < df->num_columns; i++) {
+    if (max_str_len < strlen(df->columns[i].label)) {
+      max_str_len = strlen(df->columns[i].label);
+    }
+  }
+  max_str_len += 2;
+
+  // Print column headers
+  for (int i = 0; i < df->num_columns; i++) {
+    printf("%-*s", max_str_len, df->columns[i].label);
+  }
+  printf("\n");
+
+  // Print rows
+  for (int row = (df->num_rows) - nrows; row < df->num_rows; row++) {
+    for (int col = 0; col < df->num_columns; col++) {
+      switch (df->columns[col].dtype) {
+      case INT:
+        printf("%-*d", max_str_len, df->columns[col].data.int_data[row]);
+        break;
+      case PREC:
+        printf("%-*.2f", max_str_len, df->columns[col].data.prec_data[row]);
+        break;
+      case STRING:
+        if (df->columns[col].data.string_data[row]) {
+          printf("%-*s", max_str_len, df->columns[col].data.string_data[row]);
+        } else {
+          printf("%-*s", max_str_len, "NULL");
+        }
+        break;
+      }
+    }
+    printf("\n");
+  }
 }
