@@ -3,6 +3,12 @@
 #include <stdio.h>
 #include <string.h>
 
+typedef struct {
+  DataType dtype;
+  int *dim;
+  Data values;
+} Array;
+
 /* function to view array elements */
 void view_array(int size, precision_t arr[]) {
   printf("\n[ %f", arr[0]);
