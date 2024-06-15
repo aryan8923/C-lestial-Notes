@@ -1,36 +1,102 @@
 #include "../prec.h"
 #include <stdarg.h>
 #include <stdio.h>
+#include <stdlib.h>
 #include <string.h>
 
 typedef struct {
   DataType dtype;
-  int *dim;
+  int size;
   Data values;
-} Array;
+} Vector;
 
-/* function to view array elements */
-void view_array(int size, precision_t arr[]) {
-  printf("\n[ %f", arr[0]);
-  for (int i = 1; i < size - 1; i++)
-    printf(" , %f", arr[i]);
-  printf(" , %f ]\n", arr[size - 1]);
-  return;
-}
-/*functions to initialise array */
-void init_array(int size, precision_t arr[], precision_t fill_value) {
-  for (int i = 0; i < size; i++)
-    arr[i] = fill_value;
-  return;
+/* function to view array and vector elements */
+
+void view_vector(Vector *A) {
+  printf("\n%d-element Vector {", A->size);
+  switch (A->dtype) {
+  case INT:
+    printf("int}\n\n[ %d", A->values.int_data[0]);
+    for (int i = 1; i < A->size - 1; i++) {
+      printf(" , %d", A->values.int_data[i]);
+    }
+    printf(" , %d ]\n", A->values.int_data[A->size - 1]);
+    break;
+  case PREC:
+    printf("precision_t}\n\n[ %lf", A->values.prec_data[0]);
+    for (int i = 1; i < A->size - 1; i++) {
+      printf(" , %lf", A->values.prec_data[i]);
+    }
+    printf(" , %lf ]\n", A->values.prec_data[A->size - 1]);
+    break;
+  case STRING:
+    printf("string}\n\n[ %s", A->values.string_data[0]);
+    for (int i = 1; i < A->size - 1; i++) {
+      printf(" , %s", A->values.string_data[i]);
+    }
+    printf(" , %s ]\n", A->values.string_data[A->size - 1]);
+    break;
+  }
 }
 
-void init_zeros_array(int size, precision_t arr[]) {
-  init_array(size, arr, 0.0);
-  return;
+/*functions to initialise array and vectors */
+
+Vector *zero_vector(DataType dtype, int size) {
+  Vector *V = (Vector *)malloc(sizeof(Vector));
+
+  if (V == NULL) {
+    fprintf(stderr, "Memory allocation failed for Vector");
+    exit(EXIT_FAILURE);
+  }
+
+  switch (dtype) {
+  case INT:
+    V->values.int_data = (int *)malloc(size * sizeof(int));
+    for (int i = 0; i < size; i++) {
+      V->values.int_data[i] = 0;
+    }
+    break;
+  case PREC:
+    V->values.prec_data = (precision_t *)malloc(size * sizeof(precision_t));
+    for (int i = 0; i < size; i++) {
+      V->values.prec_data[i] = 0.0;
+    }
+    break;
+  }
+
+  V->dtype = dtype;
+  V->size = size;
+
+  return V;
 }
-void init_ones_array(int size, precision_t arr[]) {
-  init_array(size, arr, 1.0);
-  return;
+
+Vector *ones_vector(DataType dtype, int size) {
+  Vector *V = (Vector *)malloc(sizeof(Vector));
+
+  if (V == NULL) {
+    fprintf(stderr, "Memory allocation failed for Vector");
+    exit(EXIT_FAILURE);
+  }
+
+  switch (dtype) {
+  case INT:
+    V->values.int_data = (int *)malloc(size * sizeof(int));
+    for (int i = 0; i < size; i++) {
+      V->values.int_data[i] = 1;
+    }
+    break;
+  case PREC:
+    V->values.prec_data = (precision_t *)malloc(size * sizeof(precision_t));
+    for (int i = 0; i < size; i++) {
+      V->values.prec_data[i] = 1.0;
+    }
+    break;
+  }
+
+  V->size = size;
+  V->dtype = dtype;
+
+  return V;
 }
 
 /* Functions for basic arithmetic of arrays */
