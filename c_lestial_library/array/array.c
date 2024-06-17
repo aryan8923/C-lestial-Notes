@@ -63,6 +63,12 @@ Vector *zero_vector(DataType dtype, int size) {
       V->values.prec_data[i] = 0.0;
     }
     break;
+  case STRING:
+    V->values.string_data = (char **)malloc(size * sizeof(char *));
+    for (int i = 0; i < size; i++) {
+      V->values.string_data[i] = "0";
+    }
+    break;
   }
 
   V->dtype = dtype;
@@ -92,10 +98,26 @@ Vector *ones_vector(DataType dtype, int size) {
       V->values.prec_data[i] = 1.0;
     }
     break;
+  case STRING:
+    V->values.string_data = (char **)malloc(size * sizeof(char **));
+    for (int i = 0; i < size; i++) {
+      V->values.string_data[i] = "1";
+    }
   }
 
   V->size = size;
   V->dtype = dtype;
+
+  return V;
+}
+
+Vector *array_to_vector_prec(int size, precision_t arr[]) {
+  Vector *V = zero_vector(PREC, size);
+  V->dtype = PREC;
+  V->size = size;
+  for (int i = 0; i < size; i++) {
+    V->values.prec_data[i] = arr[i];
+  }
 
   return V;
 }
@@ -227,43 +249,43 @@ Vector *elem_arith_op_vectors(Vector *A, Vector *B, arith_oper o) {
 
 /* functions for basic statistics for arrays*/
 
-precision_t mean_array(int size, precision_t array[]) {
+precision_t mean_vector(Vector *V) {
   int count;
   precision_t sum = 0.0;
 
-  for (count = 0; count < size; count++)
-    sum += array[count];
+  for (count = 0; count < V->size; count++)
+    sum += V->values.prec_data[count];
 
-  return sum / (precision_t)size;
+  return sum / (precision_t)V->size;
 }
 
-precision_t sum_array(int size, precision_t array[]) {
+precision_t sum_vector(Vector *V) {
   precision_t sum = 0.0;
 
-  for (int count = 0; count < size; count++) {
-    sum += array[count];
+  for (int count = 0; count < V->size; count++) {
+    sum += V->values.prec_data[count];
   }
 
   return sum;
 }
 
-precision_t min_array(int size, precision_t array[]) {
-  precision_t min = array[0];
+precision_t min_vector(Vector *V) {
+  precision_t min = V->values.prec_data[0];
 
-  for (int i = 1; i < size; i++) {
-    if (min > array[i]) {
-      min = array[i];
+  for (int i = 1; i < V->size; i++) {
+    if (min > V->values.prec_data[i]) {
+      min = V->values.prec_data[i];
     }
   }
   return min;
 }
 
-precision_t max_array(int size, precision_t array[]) {
-  precision_t max = array[0];
+precision_t max_vector(Vector *V) {
+  precision_t max = V->values.prec_data[0];
 
-  for (int i = 1; i < size; i++) {
-    if (max < array[i]) {
-      max = array[i];
+  for (int i = 1; i < V->size; i++) {
+    if (max < V->values.prec_data[i]) {
+      max = V->values.prec_data[i];
     }
   }
   return max;
