@@ -5,13 +5,19 @@
 
 #define NROWS_MATRIX(matrix) sizeof(matrix) / sizeof(matrix[0])
 #define NCOLS_MATRIX(matrix) sizeof(matrix[0]) / sizeof(matrix[0][0])
-
-/* functions for viewing matrices */
-void view_matrix(int rows, int cols, precision_t matrix[rows][cols]);
+typedef struct {
+  DataType dtype;
+  int nrows;
+  int ncols;
+  Data2d values;
+} Matrix;
 
 /* functions to initialise matrices */
-void init_identity_matrix(int r, int c, precision_t m[r][c]);
-void init_zeros_matrix(int r, int c, precision_t m[r][c]);
+Matrix *init_matrix(DataType dtype, int rows, int cols);
+void free_matrix(Matrix *mat);
+void view_matrix(Matrix *mat);
+Matrix *identity_matrix(DataType dtype, int nrows);
+Matrix *zeros_matrix(DataType dtype, int nrows, int ncols);
 
 /* Basic matrix operations */
 void scalar_mul_matrix(int r, int c, precision_t m[r][c], precision_t constant,

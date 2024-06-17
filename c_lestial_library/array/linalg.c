@@ -1,47 +1,190 @@
 #include "../prec.h"
+#include "array.h"
 #include <math.h>
 #include <stdio.h>
 #include <stdlib.h>
 
-/* functions for viewing matrices */
+#define STRING_NOT_SUPP_ERROR                                                  \
+  fprintf(stderr, "String elements not yet supported for Matrices\n")
 
-void view_matrix(int rows, int cols, precision_t matrix[rows][cols]) {
-  for (int i = 0; i < rows; i++) {
-    for (int j = 0; j < cols; j++) {
-      printf("%f  ", matrix[i][j]);
+typedef struct {
+  DataType dtype;
+  int nrows;
+  int ncols;
+  Data2d values;
+} Matrix;
+
+/* functions to initialise a matrix */
+Matrix *init_matrix(DataType dtype, int nrows, int ncols) {
+  Matrix *mat = (Matrix *)malloc(sizeof(Matrix));
+  if (!mat) {
+    fprintf(stderr, "Memory allocation failed for Matrix\n");
+    exit(EXIT_FAILURE);
+  }
+
+  mat->dtype = dtype;
+  mat->nrows = nrows;
+  mat->ncols = ncols;
+
+  switch (dtype) {
+  case INT:
+    mat->values.int_data = (int **)malloc(nrows * sizeof(int *));
+    for (int i = 0; i < nrows; i++) {
+      mat->values.int_data[i] = (int *)malloc(ncols * sizeof(int));
+    }
+    break;
+  case PREC:
+    mat->values.prec_data =
+        (precision_t **)malloc(nrows * sizeof(precision_t *));
+    for (int i = 0; i < nrows; i++) {
+      mat->values.prec_data[i] =
+          (precision_t *)malloc(ncols * sizeof(precision_t));
+    }
+    break;
+  case STRING:
+    STRING_NOT_SUPP_ERROR;
+    break;
+  }
+
+  return mat;
+}
+
+void free_matrix(Matrix *mat) {
+  if (!mat)
+    return;
+
+  switch (mat->dtype) {
+  case INT:
+    for (int i = 0; i < mat->nrows; i++) {
+      free(mat->values.int_data[i]);
+    }
+    free(mat->values.int_data);
+    break;
+  case PREC:
+    for (int i = 0; i < mat->nrows; i++) {
+      free(mat->values.prec_data[i]);
+    }
+    free(mat->values.prec_data);
+    break;
+  case STRING:
+    STRING_NOT_SUPP_ERROR;
+    break;
+  }
+
+  free(mat);
+}
+
+void view_matrix(Matrix *mat) {
+  if (!mat) {
+    fprintf(stderr, "Invalid matrix\n");
+    return;
+  }
+  switch (mat->dtype) {
+  case INT:
+    printf("\n%d x %d Matrix{INT}\n", mat->nrows, mat->ncols);
+    break;
+  case PREC:
+    printf("\n%d x %d Matrix{precision_t}\n", mat->nrows, mat->ncols);
+    break;
+  case STRING:
+    STRING_NOT_SUPP_ERROR;
+    break;
+  }
+
+  for (int i = 0; i < mat->nrows; i++) {
+    for (int j = 0; j < mat->ncols; j++) {
+      switch (mat->dtype) {
+      case INT:
+        printf("%d\t", mat->values.int_data[i][j]);
+        break;
+      case PREC:
+        printf("%.2f\t", mat->values.prec_data[i][j]);
+        break;
+      case STRING:
+        STRING_NOT_SUPP_ERROR;
+        break;
+      default:
+        fprintf(stderr, "Unknown data type\n");
+        return;
+      }
     }
     printf("\n");
   }
-  return;
 }
 
-/* functions to initialise a matrix */
+Matrix *identity_matrix(DataType dtype, int nrows) {
+  Matrix *M = init_matrix(dtype, nrows, nrows);
 
-void init_identity_matrix(int r, int c, precision_t m[r][c]) {
-  if (r != c) {
-    printf("\n Error: Given matrix is not a square matrix");
-    exit(1);
-  } else {
-    for (int i = 0; i < r; i++) {
-      for (int j = 0; j < c; j++) {
-        if (i == j)
-          m[i][j] = 1.0;
-        else {
-          m[i][j] = 0.0;
+  M->dtype = dtype;
+  M->nrows = nrows;
+  M->ncols = nrows;
+
+  switch (dtype) {
+  case INT:
+    for (int i = 0; i < nrows; i++) {
+      for (int j = 0; j < nrows; j++) {
+        if (i == j) {
+          M->values.int_data[i][i] = 1;
+        } else {
+          M->values.int_data[i][j] = 0;
         }
       }
     }
+    break;
+  case PREC:
+    for (int i = 0; i < nrows; i++) {
+      for (int j = 0; j < nrows; j++) {
+        if (i == j) {
+          M->values.prec_data[i][i] = 1.0;
+        } else {
+          M->values.prec_data[i][j] = 0.0;
+        }
+      }
+    }
+    break;
+  case STRING:
+    STRING_NOT_SUPP_ERROR;
+    break;
   }
-  return;
+
+  return M;
 }
 
-void init_zeros_matrix(int r, int c, precision_t m[r][c]) {
-  for (int i = 0; i < r; i++) {
-    for (int j = 0; j < c; j++) {
-      m[i][j] = 0.0;
+Matrix *zeros_matrix(DataType dtype, int nrows, int ncols) {
+  Matrix *M = init_matrix(dtype, nrows, ncols);
+
+  M->dtype = dtype;
+  M->nrows = nrows;
+  M->ncols = ncols;
+
+  switch (dtype) {
+  case INT:
+    for (int i = 0; i < nrows; i++) {
+      for (int j = 0; j < ncols; j++) {
+        M->values.int_data[i][j] = 0;
+      }
     }
+    break;
+  case PREC:
+    for (int i = 0; i < nrows; i++) {
+      for (int j = 0; j < ncols; j++) {
+        M->values.prec_data[i][j] = 0.0;
+      }
+    }
+    break;
+  case STRING:
+    STRING_NOT_SUPP_ERROR;
+    break;
   }
+
+  return M;
 }
+
+// Vector* matrix_to_vector(Matrix* M, int index, int axis){
+//   //axis = 0 means index'th column is to be chosen
+//
+//
+// }
 
 /* Basic matrix operations */
 void scalar_mul_matrix(int r, int c, precision_t m[r][c], precision_t constant,
@@ -102,9 +245,10 @@ void lin_system_gauss_elim(int n, precision_t A[n][n], precision_t B[n],
 
   for (int i = 0; i < n; i++) {
     // Pivoting
-    // This works by comparing the ith element of all rows and sees which one of
-    // them have the highest absolute values Once it sees that kth row has
-    // greatest ith element (absolute), then it exchanges kth row with ith.
+    // This works by comparing the ith element of all rows and sees which
+    // one of them have the highest absolute values Once it sees that kth
+    // row has greatest ith element (absolute), then it exchanges kth row
+    // with ith.
     int maxRow = i;
     for (int k = i + 1; k < n; k++) {
       if (fabs(A[k][i]) > fabs(A[maxRow][i])) {
@@ -151,16 +295,16 @@ void LU_decomp(int N, precision_t A[N][N], precision_t Lower[N][N],
   // LU = A.
   // The L and U matrices are to be stored in Lower and Upper Matrix.
 
-  // Note to self: Make a more storage optimised function since this requires 2
-  // extra NxN matrices even though both of them are half zeros
+  // Note to self: Make a more storage optimised function since this
+  // requires 2 extra NxN matrices even though both of them are half zeros
   //// This may be achieved using sparse matrices. Add a function
   /// LU_decomp_sparse that instead stores the L and U matrices in sparse
   /// matrices.
 
   precision_t sum;
 
-  init_identity_matrix(N, N, Lower);
-  init_zeros_matrix(N, N, Upper);
+  // init_identity_matrix(N, N, Lower);
+  // init_zeros_matrix(N, N, Upper);
 
   for (int j = 0; j < N; j++) {
     for (int i = 0; i < j + 1; i++) {
@@ -240,7 +384,8 @@ void inverse_matrix(int N, precision_t A[N][N], precision_t Inverse[N][N]) {
 
   LU_decomp(N, A, Lower, Upper);
 
-  // Note to self: combine the two loops for forward and backward Substitution
+  // Note to self: combine the two loops for forward and backward
+  // Substitution
 
   // Finding inverse of Lower using Forward Substitution
 

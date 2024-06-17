@@ -1,20 +1,20 @@
-#include "c_lestial_library/array/array.h"
+#include "c_lestial_library/array/linalg.h"
 #include "c_lestial_library/prec.h"
 #include <stdio.h>
 
 int main() {
-  Vector *A;
-  precision_t arr[] = {1.0, 2.0, 3.0, 4.0};
 
-  A = array_to_vector_prec(4, arr);
+  // Example usage
+  Matrix *mat_int = zeros_matrix(INT, 3, 5);
+  Matrix *mat_prec = zeros_matrix(PREC, 3, 4);
 
-  printf("\nA : ");
-  view_vector(A);
+  // Print matrices
+  view_matrix(mat_int);
 
-  printf("\nmean A : %lf", mean_vector(A));
+  view_matrix(mat_prec);
 
-  printf("\nsum A : %lf", sum_vector(A));
-  printf("\nmin A : %lf", min_vector(A));
-  printf("\nmax A : %lf\n", max_vector(A));
+  // Free matrices
+  free_matrix(mat_int);
+  free_matrix(mat_prec);
   return 0;
 }

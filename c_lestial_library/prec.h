@@ -15,6 +15,11 @@ typedef union { // stores the value of Data in a column depending on the
   char **string_data;
 } Data;
 
+typedef union {
+  int **int_data;
+  precision_t **prec_data;
+} Data2d;
+
 typedef enum { INT, PREC, STRING } DataType;
 
 typedef enum { ADD, SUB, MUL, DIV, POW } arith_oper;
