@@ -1,4 +1,5 @@
 #include "../prec.h"
+#include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
@@ -45,7 +46,7 @@ Vector *zero_vector(DataType dtype, int size) {
   Vector *V = (Vector *)malloc(sizeof(Vector));
 
   if (V == NULL) {
-    fprintf(stderr, "Memory allocation failed for Vector");
+    fprintf(stderr, "Memory allocation failed for Vector\n");
     exit(EXIT_FAILURE);
   }
 
@@ -74,7 +75,7 @@ Vector *ones_vector(DataType dtype, int size) {
   Vector *V = (Vector *)malloc(sizeof(Vector));
 
   if (V == NULL) {
-    fprintf(stderr, "Memory allocation failed for Vector");
+    fprintf(stderr, "Memory allocation failed for Vector\n");
     exit(EXIT_FAILURE);
   }
 
@@ -100,6 +101,129 @@ Vector *ones_vector(DataType dtype, int size) {
 }
 
 /* Functions for basic arithmetic of arrays */
+
+Vector *scale_vector_int(Vector *V, int scalar) {
+  Vector *A = zero_vector(INT, V->size);
+
+  // make it so that it does not modify the original vector
+  if (V->dtype == INT) {
+    for (int i = 0; i < V->size; i++) {
+      A->values.int_data[i] = scalar * V->values.int_data[i];
+    }
+  } else {
+    fprintf(stderr, "Type Mismatch error when scaling the int type Vector\n");
+    exit(EXIT_FAILURE);
+  }
+
+  return A;
+}
+
+Vector *scale_vector_prec(Vector *V, precision_t scalar) {
+  Vector *A = zero_vector(PREC, V->size);
+
+  // make it so that it does not modify the original vector
+  if (V->dtype == PREC) {
+    for (int i = 0; i < V->size; i++) {
+      A->values.prec_data[i] = scalar * V->values.prec_data[i];
+    }
+  } else {
+    fprintf(stderr, "Type Mismatch error when scaling the int type Vector\n");
+    exit(EXIT_FAILURE);
+  }
+
+  return A;
+}
+
+Vector *elem_arith_op_vectors(Vector *A, Vector *B, arith_oper o) {
+  Vector *C = zero_vector(A->dtype, A->size);
+
+  if (A->size == B->size) {
+    if (A->dtype == B->dtype) {
+      switch (A->dtype) {
+      case INT:
+        switch (o) {
+        case ADD:
+          for (int i = 0; i < A->size; i++) {
+            C->values.int_data[i] =
+                A->values.int_data[i] + B->values.int_data[i];
+          }
+          break;
+        case SUB:
+          for (int i = 0; i < A->size; i++) {
+            C->values.int_data[i] =
+                A->values.int_data[i] - B->values.int_data[i];
+          }
+          break;
+        case MUL:
+          for (int i = 0; i < A->size; i++) {
+            C->values.int_data[i] =
+                A->values.int_data[i] * B->values.int_data[i];
+          }
+          break;
+        case DIV:
+          for (int i = 0; i < A->size; i++) {
+            C->values.int_data[i] =
+                A->values.int_data[i] / B->values.int_data[i];
+          }
+          break;
+        case POW:
+          for (int i = 0; i < A->size; i++) {
+            C->values.int_data[i] =
+                pow(A->values.int_data[i], B->values.int_data[i]);
+          }
+          break;
+        }
+        break;
+
+      case PREC:
+        switch (o) {
+        case ADD:
+          for (int i = 0; i < A->size; i++) {
+            C->values.prec_data[i] =
+                A->values.prec_data[i] + B->values.prec_data[i];
+          }
+          break;
+        case SUB:
+          for (int i = 0; i < A->size; i++) {
+            C->values.prec_data[i] =
+                A->values.prec_data[i] - B->values.prec_data[i];
+          }
+          break;
+        case MUL:
+          for (int i = 0; i < A->size; i++) {
+            C->values.prec_data[i] =
+                A->values.prec_data[i] * B->values.prec_data[i];
+          }
+          break;
+        case DIV:
+          for (int i = 0; i < A->size; i++) {
+            C->values.prec_data[i] =
+                A->values.prec_data[i] / B->values.prec_data[i];
+          }
+          break;
+        case POW:
+          for (int i = 0; i < A->size; i++) {
+            C->values.prec_data[i] =
+                pow(A->values.prec_data[i], B->values.prec_data[i]);
+          }
+          break;
+        }
+        break;
+
+      case STRING:
+        fprintf(stderr, "Type error: function elem_arith_op_vectors is not "
+                        "compatible with string type vector as of now");
+      }
+    } else {
+      fprintf(stderr, "Type mismatch error for the arithmetic operation of the "
+                      "two vectors\n");
+    }
+  } else {
+    fprintf(stderr, "Size mismatch error for the arithmetic operation of the "
+                    "two vectors\n");
+  }
+  return C;
+}
 
 /* functions for basic statistics for arrays*/
 

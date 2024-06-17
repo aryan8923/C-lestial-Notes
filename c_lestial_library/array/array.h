@@ -17,9 +17,11 @@ void view_vector(Vector *A);
 /* functions to initialise array */
 Vector *zero_vector(DataType dtype, int size);
 Vector *ones_vector(DataType dtype, int size);
-void init_array(int size, precision_t arr[], precision_t fill_value);
-void init_zeros_array(int size, precision_t arr[]);
-void init_ones_array(int size, precision_t arr[]);
+
+/* Functions for basic arithmetic of arrays */
+Vector *scale_vector_int(Vector *V, int scalar);
+Vector *scale_vector_prec(Vector *V, precision_t scalar);
+Vector *elem_arith_op_vectors(Vector *A, Vector *B, arith_oper o);
 
 /* Functions for basic arithmetic of arrays */
 void scalar_mul_array(int size, precision_t arr[], precision_t scalar,

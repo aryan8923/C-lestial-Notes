@@ -17,6 +17,6 @@ typedef union { // stores the value of Data in a column depending on the
 
 typedef enum { INT, PREC, STRING } DataType;
 
-typedef enum { ADD, SUBTR, MULT, DIV, POW } arith_oper;
+typedef enum { ADD, SUB, MUL, DIV, POW } arith_oper;
 
 #endif // PRECISION_H
