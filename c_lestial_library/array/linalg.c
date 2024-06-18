@@ -115,7 +115,7 @@ void view_matrix(Matrix *mat) {
         printf("%d\t", mat->values.int_data[i][j]);
         break;
       case PREC:
-        printf("%.2f\t", mat->values.prec_data[i][j]);
+        printf("%lf\t", mat->values.prec_data[i][j]);
         break;
       case STRING:
         STRING_NOT_SUPP_ERROR;
@@ -197,117 +197,246 @@ Matrix *zeros_matrix(DataType dtype, int nrows, int ncols) {
   return M;
 }
 
-// Vector* matrix_to_vector(Matrix* M, int index, int axis){
-//   //axis = 0 means index'th column is to be chosen
-//
-//
-// }
+Vector *matrix_to_vector(Matrix *M, int index, int axis) {
+  // axis = 0 means index'th column is to be chosen
+
+  switch (M->dtype) {
+  case INT:
+    if (axis == 0) {
+      Vector *V = zero_vector(INT, M->nrows);
+      for (int i = 0; i < M->nrows; i++) {
+        V->values.int_data[i] = M->values.int_data[index][i];
+      }
+      return V;
+    } else if (axis == 1) {
+      Vector *V = zero_vector(INT, M->ncols);
+      for (int i = 0; i < M->ncols; i++) {
+        V->values.int_data[i] = M->values.int_data[i][index];
+      }
+    } else {
+      fprintf(stderr, "Incomatible value of axis in matrix_to_vector "
+                      "(Allowed axis is 0 or 1)\n");
+      return NULL;
+      exit(EXIT_FAILURE);
+    }
+
+  case PREC:
+    if (axis == 0) {
+      Vector *V = zero_vector(PREC, M->nrows);
+      for (int i = 0; i < M->nrows; i++) {
+        V->values.prec_data[i] = M->values.prec_data[index][i];
+      }
+      return V;
+    } else if (axis == 1) {
+      Vector *V = zero_vector(PREC, M->ncols);
+      for (int i = 0; i < M->ncols; i++) {
+        V->values.prec_data[i] = M->values.prec_data[i][index];
+      }
+    } else {
+      fprintf(stderr, "Incomatible value of axis in matrix_to_vector "
+                      "(Allowed axis is 0 or 1)\n");
+      return NULL;
+      exit(EXIT_FAILURE);
+    }
+  case STRING:
+    STRING_NOT_SUPP_ERROR;
+    return NULL;
+  }
+  return NULL;
+}
+
+Matrix *Array2d_to_Matrix_prec(int nrows, int ncols,
+                               precision_t arr[nrows][ncols]) {
+  Matrix *M = zeros_matrix(PREC, nrows, ncols);
+
+  for (int i = 0; i < nrows; i++) {
+    for (int j = 0; j < ncols; j++) {
+      M->values.prec_data[i][j] = arr[i][j];
+    }
+  }
+
+  return M;
+}
 
 /* Basic matrix operations */
-void scalar_mul_matrix(int r, int c, precision_t m[r][c], precision_t constant,
-                       precision_t result[r][c]) {
-  for (int i = 0; i < r; i++) {
-    for (int j = 0; j < c; j++)
-      result[i][j] = constant * m[i][j];
-  }
-  return;
-}
 
-void matmul(int r1, int c1, precision_t m1[r1][c1], int r2, int c2,
-            precision_t m2[r2][c2], precision_t result[r1][c2]) {
+Matrix *scale_matrix_int(Matrix *M, int scalar) {
+  Matrix *M_scaled = zeros_matrix(M->dtype, M->nrows, M->ncols);
 
-  if (c1 != r2) {
-    printf("\n Error: Invalid dimensions for function matmul\n");
-    exit(1);
-  } else {
-    for (int i = 0; i < r1; i++) {
-      for (int j = 0; j < c2; j++) {
-        result[i][j] = 0;
-
-        for (int k = 0; k < r2; k++) {
-          result[i][j] += m1[i][k] * m2[k][j];
-        }
+  if (M->dtype == INT) {
+    for (int i = 0; i < M->nrows; i++) {
+      for (int j = 0; j < M->ncols; j++) {
+        M_scaled->values.int_data[i][j] = scalar * M->values.int_data[i][j];
       }
     }
-    return;
+  } else {
+    fprintf(stderr, "Type Mismatch error when scaling the int type Matrix\n");
+    exit(EXIT_FAILURE);
   }
+
+  return M_scaled;
 }
 
-void flatten_matrix(int nrow, int ncol, precision_t mat[nrow][ncol],
-                    precision_t *arr) { // flattens a matrix to an array
-  int index = 0;
+Matrix *matmul(Matrix *A, Matrix *B) {
+  Matrix *C = zeros_matrix(A->dtype, A->nrows, B->ncols);
+  if (A->ncols != B->nrows) {
+    fprintf(stderr, "Invalid dimensions for mat_mul");
+    exit(EXIT_FAILURE);
+  } else {
 
-  for (int i = 0; i < nrow; i++) {
-    for (int j = 0; j < ncol; j++) {
-      arr[index++] = mat[i][j];
+    switch (A->dtype) {
+    case INT:
+      for (int i = 0; i < A->nrows; i++) {
+        for (int k = 0; k < B->ncols; k++) {
+          for (int j = 0; j < B->ncols; j++) {
+            C->values.int_data[i][j] +=
+                A->values.int_data[i][k] * B->values.int_data[k][j];
+          }
+        }
+      }
+    case PREC:
+      for (int i = 0; i < A->nrows; i++) {
+        for (int k = 0; k < B->ncols; k++) {
+          for (int j = 0; j < B->ncols; j++) {
+            C->values.prec_data[i][j] +=
+                A->values.prec_data[i][k] * B->values.prec_data[k][j];
+          }
+        }
+      }
+    case STRING:
+      STRING_NOT_SUPP_ERROR;
     }
   }
-  return;
+
+  return C;
 }
 
-precision_t trace_matrix(int N, precision_t A[N][N]) {
+Vector *flatten_matrix(Matrix *M) { // flattens a matrix to an array
+  int index = 0;
+  Vector *V = zero_vector(M->dtype, M->nrows * M->ncols);
+
+  switch (M->dtype) {
+  case INT:
+    for (int i = 0; i < M->nrows; i++) {
+      for (int j = 0; j < M->ncols; j++) {
+        V->values.int_data[index++] = M->values.int_data[i][j];
+      }
+    }
+    break;
+  case PREC:
+    for (int i = 0; i < M->nrows; i++) {
+      for (int j = 0; j < M->ncols; j++) {
+        V->values.prec_data[index++] = M->values.prec_data[i][j];
+      }
+    }
+    break;
+  case STRING:
+    STRING_NOT_SUPP_ERROR;
+    break;
+  }
+
+  return V;
+}
+
+precision_t trace_matrix(Matrix *A) {
   precision_t trace = 0.0;
 
-  for (int i = 0; i < N; i++) {
-    trace += A[i][i];
+  if (A->nrows == A->ncols) {
+    switch (A->dtype) {
+    case INT:
+      for (int i = 0; i < A->nrows; i++) {
+        trace += A->values.int_data[i][i];
+      }
+      break;
+    case PREC:
+      for (int i = 0; i < A->nrows; i++) {
+        trace += A->values.prec_data[i][i];
+      }
+      break;
+    case STRING:
+      STRING_NOT_SUPP_ERROR;
+      break;
+    }
+
+    return trace;
+  } else {
+    fprintf(stderr, "given matrix not square matrix, to calculate trace\n");
+    exit(EXIT_FAILURE);
   }
+
   return trace;
 }
 
 /* Functions to solve linear equations */
 
-void lin_system_gauss_elim(int n, precision_t A[n][n], precision_t B[n],
-                           precision_t X[n]) {
+Vector *lin_system_gauss_elim(Matrix *A, Vector *B) {
   /* This function solves the linear equation AX = B */
+  // This function makes changes to
 
-  for (int i = 0; i < n; i++) {
+  Vector *X = zero_vector(PREC, B->size);
+
+  if (A->nrows != A->ncols) {
+    fprintf(stderr,
+            "Error: \"A\" Matrix in lin_system_gauss_elim not square.\n");
+    exit(EXIT_FAILURE);
+  }
+  if (A->nrows != B->size) {
+    fprintf(stderr,
+            "Error: Matrix \"A\" and Vector \"B\" have unequal sizes. \n");
+    exit(EXIT_FAILURE);
+  }
+
+  for (int i = 0; i < A->nrows; i++) {
     // Pivoting
     // This works by comparing the ith element of all rows and sees which
     // one of them have the highest absolute values Once it sees that kth
     // row has greatest ith element (absolute), then it exchanges kth row
     // with ith.
     int maxRow = i;
-    for (int k = i + 1; k < n; k++) {
-      if (fabs(A[k][i]) > fabs(A[maxRow][i])) {
+    for (int k = i + 1; k < A->nrows; k++) {
+      if (fabs(A->values.prec_data[k][i]) >
+          fabs(A->values.prec_data[maxRow][i])) {
         maxRow = k;
       }
     }
 
     // Now you know which row has the greatest ith element (absolute)
     // Swap rows in A
-    for (int k = 0; k < n; k++) {
-      precision_t temp = A[i][k];
-      A[i][k] = A[maxRow][k];
-      A[maxRow][k] = temp;
+    for (int k = 0; k < A->nrows; k++) {
+      precision_t temp = A->values.prec_data[i][k];
+      A->values.prec_data[i][k] = A->values.prec_data[maxRow][k];
+      A->values.prec_data[maxRow][k] = temp;
     }
 
     // Swap values in B
-    precision_t temp = B[i];
-    B[i] = B[maxRow];
-    B[maxRow] = temp;
+    precision_t temp = B->values.prec_data[i];
+    B->values.prec_data[i] = B->values.prec_data[maxRow];
+    B->values.prec_data[maxRow] = temp;
 
     // Elimination
-    for (int j = i + 1; j < n; j++) {
-      precision_t m = A[j][i] / A[i][i];
-      for (int k = i; k < n; k++) {
-        A[j][k] -= m * A[i][k];
+    for (int j = i + 1; j < A->nrows; j++) {
+      precision_t m = A->values.prec_data[j][i] / A->values.prec_data[i][i];
+      for (int k = i; k < A->nrows; k++) {
+        A->values.prec_data[j][k] -= m * A->values.prec_data[i][k];
       }
-      B[j] -= m * B[i];
+      B->values.prec_data[j] -= m * B->values.prec_data[i];
     }
   }
 
   // Back Substitution
-  for (int i = n - 1; i >= 0; i--) {
-    X[i] = B[i];
-    for (int j = i + 1; j < n; j++) {
-      X[i] -= A[i][j] * X[j];
+  for (int i = A->nrows - 1; i >= 0; i--) {
+    X->values.prec_data[i] = B->values.prec_data[i];
+    for (int j = i + 1; j < A->nrows; j++) {
+      X->values.prec_data[i] -=
+          A->values.prec_data[i][j] * X->values.prec_data[j];
     }
-    X[i] /= A[i][i];
+    X->values.prec_data[i] /= A->values.prec_data[i][i];
   }
+
+  return X;
 }
 
-void LU_decomp(int N, precision_t A[N][N], precision_t Lower[N][N],
-               precision_t Upper[N][N]) {
+void LU_decomp(Matrix *A, Matrix *Lower, Matrix *Upper) {
   // This function takes a square matrix and finds it "LU decomposed" form:
   // LU = A.
   // The L and U matrices are to be stored in Lower and Upper Matrix.
@@ -317,11 +446,33 @@ void LU_decomp(int N, precision_t A[N][N], precision_t Lower[N][N],
   //// This may be achieved using sparse matrices. Add a function
   /// LU_decomp_sparse that instead stores the L and U matrices in sparse
   /// matrices.
+  int N = A->nrows;
+
+  if (A->nrows != A->ncols) {
+    fprintf(stderr,
+            "Error: Matrix \"A\" in LU_decomp function is not square\n");
+    exit(EXIT_FAILURE);
+  }
+  if (Lower->ncols != Lower->nrows) {
+    fprintf(stderr,
+            "Error: Matrix \"Lower\" in LU_decomp function is not square\n");
+    exit(EXIT_FAILURE);
+  }
+  if (Upper->ncols != Upper->nrows) {
+    fprintf(stderr,
+            "Error: Matrix \"Upper\" in LU_decomp function is not square\n");
+    exit(EXIT_FAILURE);
+  }
+  if ((A->nrows != Lower->nrows) || (A->nrows != A->ncols)) {
+    fprintf(stderr, "Error: Dimension mimatch between Matrix \"A\" and the "
+                    "other matrix in LU_decomp function\n");
+    exit(EXIT_FAILURE);
+  }
 
   precision_t sum;
 
-  // init_identity_matrix(N, N, Lower);
-  // init_zeros_matrix(N, N, Upper);
+  Lower = identity_matrix(PREC, A->nrows);
+  Upper = zeros_matrix(PREC, A->nrows, A->ncols);
 
   for (int j = 0; j < N; j++) {
     for (int i = 0; i < j + 1; i++) {
@@ -330,76 +481,108 @@ void LU_decomp(int N, precision_t A[N][N], precision_t Lower[N][N],
       else {
         sum = 0.0;
         for (int k = 0; k < i; k++) {
-          sum += (Lower[i][k] * Upper[k][j]);
+          sum +=
+              (Lower->values.prec_data[i][k] * Upper->values.prec_data[k][j]);
         }
       }
-      Upper[i][j] = A[i][j] - sum;
+      Upper->values.prec_data[i][j] = A->values.prec_data[i][j] - sum;
     }
     for (int i = j + 1; i < N; i++) {
       sum = 0.0;
       for (int k = 0; k < j; k++) {
-        sum += (Lower[i][k] * Upper[k][j]);
+        sum += (Lower->values.prec_data[i][k] * Upper->values.prec_data[k][j]);
       }
-      Lower[i][j] = (A[i][j] - sum) / (Upper[j][j]);
+      Lower->values.prec_data[i][j] =
+          (A->values.prec_data[i][j] - sum) / (Upper->values.prec_data[j][j]);
     }
   }
 }
 
-precision_t determinant(int N, precision_t A[N][N]) {
-  precision_t Lower[N][N], Upper[N][N];
+precision_t determinant(Matrix *M) {
+  if (M->nrows != M->ncols) {
+    fprintf(stderr,
+            "Error: Given matrix in determinant function is not square.");
+    exit(EXIT_FAILURE);
+  }
+
+  Matrix *Lower = zeros_matrix(PREC, M->nrows, M->ncols);
+  Matrix *Upper = zeros_matrix(PREC, M->nrows, M->ncols);
   precision_t det = 1.0;
 
-  LU_decomp(N, A, Lower, Upper);
+  LU_decomp(M, Lower, Upper);
 
   // calculating the determinant using the fact that
   // det(A) = product(diagonal elements of Upper Matrix of A)
 
-  for (int i = 0; i < N; i++) {
-    det *= Upper[i][i];
+  for (int i = 0; i < M->nrows; i++) {
+    det *= Upper->values.prec_data[i][i];
   }
   return det;
 }
 
-void lin_system_LU_decomp(int N, precision_t A[N][N], precision_t B[N],
-                          precision_t X[N]) {
+Vector *lin_system_LU_decomp(Matrix *A, Vector *B) {
   // Function to solve AX=B
 
   precision_t sum;
+  int N = A->nrows;
 
-  precision_t Upper[N][N], Lower[N][N], Z[N];
+  Vector *X = zero_vector(PREC, B->size);
 
-  LU_decomp(N, A, Lower, Upper);
+  if (A->nrows != A->ncols) {
+    fprintf(stderr,
+            "Error: \"A\" Matrix in lin_system_gauss_elim not square.\n");
+    exit(EXIT_FAILURE);
+  }
+  if (A->nrows != B->size) {
+    fprintf(stderr,
+            "Error: Matrix \"A\" and Vector \"B\" have unequal sizes. \n");
+    exit(EXIT_FAILURE);
+  }
+
+  Matrix *Upper = zeros_matrix(PREC, A->nrows, A->ncols);
+  Matrix *Lower = zeros_matrix(PREC, A->nrows, A->ncols);
+  Vector *Z = zero_vector(PREC, A->nrows);
+
+  LU_decomp(A, Lower, Upper);
 
   // Forward Substitution to solve for Z in LZ = B where Z = UA
-  Z[0] = B[0];
+  Z->values.prec_data[0] = B->values.prec_data[0];
   for (int i = 1; i < N; i++) {
     sum = 0.0;
     for (int j = 0; j < i; j++) {
-      sum += (Lower[i][j] * Z[j]);
+      sum += (Lower->values.prec_data[i][j] * Z->values.prec_data[j]);
     }
-    Z[i] = B[i] - sum;
+    Z->values.prec_data[i] = B->values.prec_data[i] - sum;
   }
 
   // Backward Substitution to solve for X in UX = Z
-  X[N - 1] = Z[N - 1] / Upper[N - 1][N - 1];
+  X->values.prec_data[N - 1] =
+      Z->values.prec_data[N - 1] / Upper->values.prec_data[N - 1][N - 1];
   for (int i = N - 2; i >= 0; i--) {
     sum = 0.0;
     for (int j = N - 1; j > i; j--) {
-      sum += (Upper[i][j] * X[j]);
+      sum += (Upper->values.prec_data[i][j] * X->values.prec_data[j]);
     }
-    X[i] = (Z[i] - sum) / (Upper[i][i]);
+    X->values.prec_data[i] =
+        (Z->values.prec_data[i] - sum) / (Upper->values.prec_data[i][i]);
   }
-  return;
+  return X;
 }
 
-void inverse_matrix(int N, precision_t A[N][N], precision_t Inverse[N][N]) {
-  precision_t Upper[N][N], Lower[N][N], inv_Upper[N][N], inv_Lower[N][N];
+Matrix *inverse_matrix(Matrix *A) {
+
+  Matrix *Inverse = zeros_matrix(PREC, A->nrows, A->ncols);
+  Matrix *Upper = zeros_matrix(PREC, A->nrows, A->ncols);
+  Matrix *Lower = zeros_matrix(PREC, A->nrows, A->ncols);
+  Matrix *inv_Upper = zeros_matrix(PREC, A->nrows, A->ncols);
+  Matrix *inv_Lower = zeros_matrix(PREC, A->nrows, A->ncols);
   precision_t sum;
+  int N = A->ncols;
   // This function can still not give correct results.
   // For eg for : {{6, 2, 3},{0, 0, 4}, {2, 0, 0}}
   // the final result is a matrix will all elements = nan
 
-  LU_decomp(N, A, Lower, Upper);
+  LU_decomp(A, Lower, Upper);
 
   // Note to self: combine the two loops for forward and backward
   // Substitution
@@ -409,20 +592,21 @@ void inverse_matrix(int N, precision_t A[N][N], precision_t Inverse[N][N]) {
   for (int col = 0; col < N; col++) {
 
     if (col == 0) {
-      inv_Lower[0][col] = 1.0;
+      inv_Lower->values.prec_data[0][col] = 1.0;
     } else {
-      inv_Lower[0][col] = 0.0;
+      inv_Lower->values.prec_data[0][col] = 0.0;
     }
 
     for (int i = 1; i < N; i++) {
       sum = 0.0;
       for (int j = 0; j < i; j++) {
-        sum += (Lower[i][j] * inv_Lower[j][col]);
+        sum += (Lower->values.prec_data[i][j] *
+                inv_Lower->values.prec_data[j][col]);
       }
       if (i == col) {
-        inv_Lower[i][col] = (1.0 - sum);
+        inv_Lower->values.prec_data[i][col] = (1.0 - sum);
       } else {
-        inv_Lower[i][col] = -sum;
+        inv_Lower->values.prec_data[i][col] = -sum;
       }
     }
   }
@@ -431,27 +615,31 @@ void inverse_matrix(int N, precision_t A[N][N], precision_t Inverse[N][N]) {
   for (int col = 0; col < N; col++) {
 
     if (col == N - 1) {
-      inv_Upper[N - 1][col] = 1.0 / (Upper[N - 1][col]);
+      inv_Upper->values.prec_data[N - 1][col] =
+          1.0 / (Upper->values.prec_data[N - 1][col]);
     } else {
-      inv_Upper[N - 1][col] = 0.0;
+      inv_Upper->values.prec_data[N - 1][col] = 0.0;
     }
 
     for (int i = N - 2; i >= 0; i--) {
       sum = 0.0;
       for (int j = N - 1; j > i; j--) {
-        sum += (Upper[i][j] * inv_Upper[j][col]);
+        sum += (Upper->values.prec_data[i][j] *
+                inv_Upper->values.prec_data[j][col]);
       }
       if (i == col) {
-        inv_Upper[i][col] = (1.0 - sum) / (Upper[i][i]);
+        inv_Upper->values.prec_data[i][col] =
+            (1.0 - sum) / (Upper->values.prec_data[i][i]);
       } else {
-        inv_Upper[i][col] = -sum / Upper[i][i];
+        inv_Upper->values.prec_data[i][col] =
+            -sum / Upper->values.prec_data[i][i];
       }
     }
   }
 
   // Note to self: create a function that uses sparse matrix multiplication
   // instead
-  matmul(N, N, inv_Upper, N, N, inv_Lower, Inverse);
+  // matmul(N, N, inv_Upper, N, N, inv_Lower, Inverse);
 
-  return;
+  return Inverse;
 }

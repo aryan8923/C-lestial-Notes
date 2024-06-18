@@ -15,23 +15,38 @@ You should have received a copy of the GNU General Public License along with
 C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 */
 
+#include "c_lestial_library/array/array.h"
 #include "c_lestial_library/array/linalg.h"
 #include "c_lestial_library/prec.h"
 #include <stdio.h>
 
+#define SIZE 3
+
 int main() {
+  precision_t A_arr[SIZE][SIZE] = {{1, 2, 3}, {2, 3, 5}, {1, 2, 1}};
+  Matrix *A = Array2d_to_Matrix_prec(SIZE, SIZE, A_arr);
+  precision_t B_arr[SIZE] = {0, 1, 3};
+  Vector *B = array_to_vector_prec(SIZE, B_arr);
 
-  // Example usage
-  Matrix *mat_int = zeros_matrix(INT, 3, 5);
-  Matrix *mat_prec = zeros_matrix(PREC, 3, 4);
+  Matrix *Lower = zeros_matrix(PREC, SIZE, SIZE);
+  Matrix *Upper = zeros_matrix(PREC, SIZE, SIZE);
 
-  // Print matrices
-  view_matrix(mat_int);
+  printf("\nGauss Elimination:");
+  Vector *X = lin_system_gauss_elim(A, B);
 
-  view_matrix(mat_prec);
+  view_vector(X);
 
-  // Free matrices
-  free_matrix(mat_int);
-  free_matrix(mat_prec);
+  printf("\nLU decomposed :");
+  LU_decomp(A, Lower, Upper);
+  view_matrix(Lower);
+  view_matrix(Upper);
+
+  X = lin_system_LU_decomp(A, B);
+
+  view_vector(X);
+
+  printf("determinant A = %lf\n", determinant(A));
+  view_matrix(inverse_matrix(A));
+
   return 0;
 }
