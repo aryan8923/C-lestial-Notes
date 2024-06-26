@@ -139,6 +139,30 @@ Vector *array_to_vector_prec(int size, precision_t arr[]) {
   return V;
 }
 
+Vector *copy_Vector(Vector *V) {
+  Vector *V_copy = zero_vector(V->dtype, V->size);
+
+  switch (V->dtype) {
+  case INT:
+    for (int i = 0; i < V->size; i++) {
+      V_copy->values.int_data[i] = V->values.int_data[i];
+    }
+    break;
+  case PREC:
+    for (int i = 0; i < V->size; i++) {
+      V_copy->values.prec_data[i] = V->values.prec_data[i];
+    }
+    break;
+  case STRING:
+    for (int i = 0; i < V->size; i++) {
+      V_copy->values.prec_data[i] = V->values.prec_data[i];
+    }
+    break;
+  }
+
+  return V_copy;
+}
+
 /* Functions for basic arithmetic of arrays */
 
 Vector *scale_vector_int(Vector *V, int scalar) {

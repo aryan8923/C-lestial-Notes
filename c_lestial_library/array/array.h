@@ -35,6 +35,7 @@ void view_vector(Vector *A);
 Vector *zero_vector(DataType dtype, int size);
 Vector *ones_vector(DataType dtype, int size);
 Vector *array_to_vector_prec(int size, precision_t arr[]);
+Vector *copy_Vector(Vector *V);
 
 /* Functions for basic arithmetic of arrays and vectors*/
 Vector *scale_vector_int(Vector *V, int scalar);

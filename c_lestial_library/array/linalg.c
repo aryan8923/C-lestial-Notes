@@ -130,6 +130,13 @@ void view_matrix(Matrix *mat) {
 }
 
 Matrix *identity_matrix(DataType dtype, int nrows) {
+  // issue with this function is that it initialises the matrix at some address
+  // and returns that address that it creates. So if you are using it inside a
+  // function, where you are taking an input matrix, if you try to convert that
+  // matrix to identity, this function will instead change the input pointer's
+  // address to this new one and not to the older one. So it does not make
+  // change to already existing matrix. It returns a newly initialsed one
+
   Matrix *M = init_matrix(dtype, nrows, nrows);
 
   M->dtype = dtype;
@@ -258,6 +265,32 @@ Matrix *Array2d_to_Matrix_prec(int nrows, int ncols,
   return M;
 }
 
+Matrix *copy_Matrix(Matrix *M) {
+  Matrix *M_copy = zeros_matrix(M->dtype, M->nrows, M->ncols);
+
+  switch (M->dtype) {
+  case INT:
+    for (int i = 0; i < M->nrows; i++) {
+      for (int j = 0; j < M->ncols; j++) {
+        M_copy->values.int_data[i][j] = M->values.int_data[i][j];
+      }
+    }
+    break;
+  case PREC:
+    for (int i = 0; i < M->nrows; i++) {
+      for (int j = 0; j < M->ncols; j++) {
+        M_copy->values.prec_data[i][j] = M->values.prec_data[i][j];
+      }
+    }
+    break;
+  case STRING:
+    STRING_NOT_SUPP_ERROR;
+    break;
+  }
+
+  return M_copy;
+}
+
 /* Basic matrix operations */
 
 Matrix *scale_matrix_int(Matrix *M, int scalar) {
@@ -267,6 +300,23 @@ Matrix *scale_matrix_int(Matrix *M, int scalar) {
     for (int i = 0; i < M->nrows; i++) {
       for (int j = 0; j < M->ncols; j++) {
         M_scaled->values.int_data[i][j] = scalar * M->values.int_data[i][j];
+      }
+    }
+  } else {
+    fprintf(stderr, "Type Mismatch error when scaling the int type Matrix\n");
+    exit(EXIT_FAILURE);
+  }
+
+  return M_scaled;
+}
+
+Matrix *scale_matrix_prec(Matrix *M, precision_t scalar) {
+  Matrix *M_scaled = zeros_matrix(M->dtype, M->nrows, M->ncols);
+
+  if (M->dtype == INT) {
+    for (int i = 0; i < M->nrows; i++) {
+      for (int j = 0; j < M->ncols; j++) {
+        M_scaled->values.prec_data[i][j] = scalar * M->values.prec_data[i][j];
       }
     }
   } else {
@@ -373,6 +423,9 @@ Vector *lin_system_gauss_elim(Matrix *A, Vector *B) {
   /* This function solves the linear equation AX = B */
   // This function makes changes to
 
+  Matrix *A_copy = copy_Matrix(A);
+  Vector *B_copy = copy_Vector(B);
+
   Vector *X = zero_vector(PREC, B->size);
 
   if (A->nrows != A->ncols) {
@@ -393,59 +446,55 @@ Vector *lin_system_gauss_elim(Matrix *A, Vector *B) {
     // row has greatest ith element (absolute), then it exchanges kth row
     // with ith.
     int maxRow = i;
-    for (int k = i + 1; k < A->nrows; k++) {
-      if (fabs(A->values.prec_data[k][i]) >
-          fabs(A->values.prec_data[maxRow][i])) {
+    for (int k = i + 1; k < A_copy->nrows; k++) {
+      if (fabs(A_copy->values.prec_data[k][i]) >
+          fabs(A_copy->values.prec_data[maxRow][i])) {
         maxRow = k;
       }
     }
 
     // Now you know which row has the greatest ith element (absolute)
     // Swap rows in A
-    for (int k = 0; k < A->nrows; k++) {
-      precision_t temp = A->values.prec_data[i][k];
-      A->values.prec_data[i][k] = A->values.prec_data[maxRow][k];
-      A->values.prec_data[maxRow][k] = temp;
+    for (int k = 0; k < A_copy->nrows; k++) {
+      precision_t temp = A_copy->values.prec_data[i][k];
+      A_copy->values.prec_data[i][k] = A_copy->values.prec_data[maxRow][k];
+      A_copy->values.prec_data[maxRow][k] = temp;
     }
 
     // Swap values in B
-    precision_t temp = B->values.prec_data[i];
-    B->values.prec_data[i] = B->values.prec_data[maxRow];
-    B->values.prec_data[maxRow] = temp;
+    precision_t temp = B_copy->values.prec_data[i];
+    B_copy->values.prec_data[i] = B_copy->values.prec_data[maxRow];
+    B_copy->values.prec_data[maxRow] = temp;
 
     // Elimination
-    for (int j = i + 1; j < A->nrows; j++) {
-      precision_t m = A->values.prec_data[j][i] / A->values.prec_data[i][i];
-      for (int k = i; k < A->nrows; k++) {
-        A->values.prec_data[j][k] -= m * A->values.prec_data[i][k];
+    for (int j = i + 1; j < A_copy->nrows; j++) {
+      precision_t m =
+          A_copy->values.prec_data[j][i] / A_copy->values.prec_data[i][i];
+      for (int k = i; k < A_copy->nrows; k++) {
+        A_copy->values.prec_data[j][k] -= m * A_copy->values.prec_data[i][k];
       }
-      B->values.prec_data[j] -= m * B->values.prec_data[i];
+      B_copy->values.prec_data[j] -= m * B_copy->values.prec_data[i];
     }
   }
 
   // Back Substitution
-  for (int i = A->nrows - 1; i >= 0; i--) {
-    X->values.prec_data[i] = B->values.prec_data[i];
-    for (int j = i + 1; j < A->nrows; j++) {
+  for (int i = A_copy->nrows - 1; i >= 0; i--) {
+    X->values.prec_data[i] = B_copy->values.prec_data[i];
+    for (int j = i + 1; j < A_copy->nrows; j++) {
       X->values.prec_data[i] -=
-          A->values.prec_data[i][j] * X->values.prec_data[j];
+          A_copy->values.prec_data[i][j] * X->values.prec_data[j];
     }
-    X->values.prec_data[i] /= A->values.prec_data[i][i];
+    X->values.prec_data[i] /= A_copy->values.prec_data[i][i];
   }
 
   return X;
 }
 
 void LU_decomp(Matrix *A, Matrix *Lower, Matrix *Upper) {
-  // This function takes a square matrix and finds it "LU decomposed" form:
+  // This function takes a square matrix and finds its "LU decomposed" form:
   // LU = A.
   // The L and U matrices are to be stored in Lower and Upper Matrix.
 
-  // Note to self: Make a more storage optimised function since this
-  // requires 2 extra NxN matrices even though both of them are half zeros
-  //// This may be achieved using sparse matrices. Add a function
-  /// LU_decomp_sparse that instead stores the L and U matrices in sparse
-  /// matrices.
   int N = A->nrows;
 
   if (A->nrows != A->ncols) {
@@ -464,26 +513,30 @@ void LU_decomp(Matrix *A, Matrix *Lower, Matrix *Upper) {
     exit(EXIT_FAILURE);
   }
   if ((A->nrows != Lower->nrows) || (A->nrows != A->ncols)) {
-    fprintf(stderr, "Error: Dimension mimatch between Matrix \"A\" and the "
+    fprintf(stderr, "Error: Dimension mismatch between Matrix \"A\" and the "
                     "other matrix in LU_decomp function\n");
     exit(EXIT_FAILURE);
   }
 
   precision_t sum;
 
-  Lower = identity_matrix(PREC, A->nrows);
-  Upper = zeros_matrix(PREC, A->nrows, A->ncols);
+  // Initialize Lower to identity matrix and Upper to zero matrix
+  for (int i = 0; i < N; i++) {
+    for (int j = 0; j < N; j++) {
+      if (i == j) {
+        Lower->values.prec_data[i][j] = 1.0;
+      } else {
+        Lower->values.prec_data[i][j] = 0.0;
+      }
+      Upper->values.prec_data[i][j] = 0.0;
+    }
+  }
 
   for (int j = 0; j < N; j++) {
     for (int i = 0; i < j + 1; i++) {
-      if (i == 0)
-        sum = 0.0;
-      else {
-        sum = 0.0;
-        for (int k = 0; k < i; k++) {
-          sum +=
-              (Lower->values.prec_data[i][k] * Upper->values.prec_data[k][j]);
-        }
+      sum = 0.0;
+      for (int k = 0; k < i; k++) {
+        sum += (Lower->values.prec_data[i][k] * Upper->values.prec_data[k][j]);
       }
       Upper->values.prec_data[i][j] = A->values.prec_data[i][j] - sum;
     }
@@ -639,7 +692,8 @@ Matrix *inverse_matrix(Matrix *A) {
 
   // Note to self: create a function that uses sparse matrix multiplication
   // instead
-  // matmul(N, N, inv_Upper, N, N, inv_Lower, Inverse);
+
+  Inverse = matmul(inv_Upper, inv_Lower);
 
   return Inverse;
 }

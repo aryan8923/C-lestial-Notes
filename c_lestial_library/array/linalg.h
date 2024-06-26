@@ -39,9 +39,11 @@ Matrix *zeros_matrix(DataType dtype, int nrows, int ncols);
 Vector *matrix_to_vector(Matrix *M, int index, int axis);
 Matrix *Array2d_to_Matrix_prec(int nrows, int ncols,
                                precision_t arr[nrows][ncols]);
+Matrix *copy_Matrix(Matrix *M);
 /* Basic matrix operations */
 
 Matrix *scale_matrix_int(Matrix *M, int scalar);
+Matrix *scale_matrix_prec(Matrix *M, precision_t scalar);
 Matrix *matmul(Matrix *A, Matrix *B);
 Vector *flatten_matrix(Matrix *M);
 precision_t trace_matrix(Matrix *A);

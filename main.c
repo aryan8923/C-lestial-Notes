@@ -28,24 +28,17 @@ int main() {
   precision_t B_arr[SIZE] = {0, 1, 3};
   Vector *B = array_to_vector_prec(SIZE, B_arr);
 
-  Matrix *Lower = zeros_matrix(PREC, SIZE, SIZE);
-  Matrix *Upper = zeros_matrix(PREC, SIZE, SIZE);
-
   printf("\nGauss Elimination:");
   Vector *X = lin_system_gauss_elim(A, B);
 
   view_vector(X);
 
-  printf("\nLU decomposed :");
-  LU_decomp(A, Lower, Upper);
-  view_matrix(Lower);
-  view_matrix(Upper);
-
+  printf("\nDeterminant A: %lf", determinant(A));
+  printf("\nLU decomposition:");
   X = lin_system_LU_decomp(A, B);
-
   view_vector(X);
 
-  printf("determinant A = %lf\n", determinant(A));
+  printf("\nInverse A:");
   view_matrix(inverse_matrix(A));
 
   return 0;
