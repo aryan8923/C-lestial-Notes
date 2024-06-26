@@ -163,6 +163,34 @@ Vector *copy_Vector(Vector *V) {
   return V_copy;
 }
 
+Vector *range_vector(precision_t start, precision_t stop, precision_t step) {
+  int vec_size = (int)((stop - start) / step);
+  if (vec_size <= 0) {
+    fprintf(stderr,
+            "Error: Invalid start/stop/step input in function range_vector.\n");
+    exit(EXIT_FAILURE);
+  }
+  Vector *V = zero_vector(PREC, vec_size);
+
+  for (int i = 0; i < vec_size; i++) {
+    V->values.prec_data[i] = start + ((precision_t)i * step);
+  }
+
+  return V;
+}
+
+Vector *linspace_vector(precision_t start, precision_t stop, precision_t N) {
+  Vector *V = zero_vector(PREC, N);
+
+  precision_t step = ((stop - start) / (precision_t)N);
+
+  for (int i = 0; i < N; i++) {
+    V->values.prec_data[i] = start + ((precision_t)i * step);
+  }
+
+  return V;
+}
+
 /* Functions for basic arithmetic of arrays */
 
 Vector *scale_vector_int(Vector *V, int scalar) {
@@ -286,6 +314,15 @@ Vector *elem_arith_op_vectors(Vector *A, Vector *B, arith_oper o) {
                     "two vectors\n");
   }
   return C;
+}
+
+Vector *map_vector(precision_t (*func)(precision_t), Vector *V) {
+  Vector *V_copy = copy_Vector(V);
+
+  for (int i = 0; i < V->size; i++) {
+    V_copy->values.prec_data[i] = (*func)(V->values.prec_data[i]);
+  }
+  return V_copy;
 }
 
 /* functions for basic statistics for arrays*/

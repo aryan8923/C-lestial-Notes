@@ -16,30 +16,23 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 */
 
 #include "c_lestial_library/array/array.h"
-#include "c_lestial_library/array/linalg.h"
 #include "c_lestial_library/prec.h"
+#include <math.h>
 #include <stdio.h>
 
-#define SIZE 3
+#define N_PTS 4
+
+precision_t f(precision_t i) { return cos(i * M_PI / (N_PTS + 1)); }
 
 int main() {
-  precision_t A_arr[SIZE][SIZE] = {{1, 2, 3}, {2, 3, 5}, {1, 2, 1}};
-  Matrix *A = Array2d_to_Matrix_prec(SIZE, SIZE, A_arr);
-  precision_t B_arr[SIZE] = {0, 1, 3};
-  Vector *B = array_to_vector_prec(SIZE, B_arr);
+  precision_t arr[4] = {1, 2, 3, 4};
+  Vector *V = array_to_vector_prec(4, arr);
 
-  printf("\nGauss Elimination:");
-  Vector *X = lin_system_gauss_elim(A, B);
-
-  view_vector(X);
-
-  printf("\nDeterminant A: %lf", determinant(A));
-  printf("\nLU decomposition:");
-  X = lin_system_LU_decomp(A, B);
-  view_vector(X);
-
-  printf("\nInverse A:");
-  view_matrix(inverse_matrix(A));
+  view_vector(linspace_vector(1.0, 5, 10));
+  printf("\nV:");
+  view_vector(V);
+  printf("\nmap(V):");
+  view_vector(map_vector(&f, V));
 
   return 0;
 }
