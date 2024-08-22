@@ -17,22 +17,17 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 
 #include "c_lestial_library/array/array.h"
 #include "c_lestial_library/prec.h"
-#include <math.h>
-#include <stdio.h>
 
-#define N_PTS 4
-
-precision_t f(precision_t i) { return cos(i * M_PI / (N_PTS + 1)); }
+#define ID_SIZE 3
 
 int main() {
-  precision_t arr[4] = {1, 2, 3, 4};
-  Vector *V = array_to_vector_prec(4, arr);
 
-  view_vector(linspace_vector(1.0, 5, 10));
-  printf("\nV:");
-  view_vector(V);
-  printf("\nmap(V):");
-  view_vector(map_vector(&f, V));
+  precision_t A_arr[] = {10, 20, 30, 40, 50};
+  int index_A[ID_SIZE] = {2, 3, 1};
+
+  Vector *V = array_to_vector_prec(LENGTH_ARR(A_arr), A_arr);
+
+  view_vector(slice_vector(V, index_A, LENGTH_ARR(index_A)));
 
   return 0;
 }

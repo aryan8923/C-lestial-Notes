@@ -18,13 +18,13 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 #ifndef MATHFUNCS_H
 #define MATHFUNCS_H
 
+#include "array/array.h"
 #include "prec.h"
 
 /* Functions related to polynomials */
 
-void view_polynomial(int coeff_array_size, precision_t coeff[coeff_array_size],
-                     char variable);
-precision_t polynomial_value(precision_t x, int coeff_array_size,
-                             precision_t coeff[coeff_array_size]);
+void view_polynomial(Vector *coeff, char variable);
+precision_t eval_polynomial(precision_t x, Vector *coeff);
+precision_t eval_polynomial_dx(precision_t x, Vector *coeff);
 
 #endif

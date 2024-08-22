@@ -18,32 +18,40 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 /* This file is a collection of functions to view or evaluate mathematical
  * functions like Polynomials, Bessel Functions etc */
 
+#include "array/array.h"
 #include "prec.h"
 #include <math.h>
 #include <stdio.h>
 
 /* Functions related to polynomials */
 
-void view_polynomial(int coeff_array_size, precision_t coeff[coeff_array_size],
-                     char variable) {
+void view_polynomial(Vector *coeff, char variable) {
   /// Prints out the polynomial
 
   printf("\n ");
-  for (int i = 0; i < coeff_array_size - 1; i++)
-    printf("%f%c^%d+ ", coeff[i], variable, i);
-  printf("%f%c^%d", coeff[coeff_array_size - 1], variable,
-         coeff_array_size - 1);
+  for (int i = 0; i < coeff->size - 1; i++)
+    printf("%f%c^%d+ ", coeff->values.prec_data[i], variable, i);
+  printf("%f%c^%d", coeff->values.prec_data[coeff->size - 1], variable,
+         coeff->size - 1);
   printf("\n");
   return;
 }
 
-precision_t polynomial_value(precision_t x, int coeff_array_size,
-                             precision_t coeff[coeff_array_size]) {
-  /// Returns the value of the polynomial, coeffecients given by the coeff array
-  /// (index n corresponds to c_n coefficient )
-  precision_t p = 0.0;
-  for (int i = 0; i < coeff_array_size; i++)
-    p += (coeff[i] * pow(x, i));
-
+precision_t eval_polynomial(precision_t x, Vector *coeff) {
+  precision_t p = coeff->values.prec_data[coeff->size];
+  for (int i = coeff->size - 1; i >= 0; i--) {
+    p = (p * x) + coeff->values.prec_data[i];
+  }
   return p;
+}
+
+precision_t eval_polynomial_dx(precision_t x, Vector *coeff) {
+  precision_t dp = 0.0;
+  precision_t p = coeff->values.prec_data[coeff->size];
+  for (int i = coeff->size - 1; i >= 0; i--) {
+    dp = (dp * x) + p;
+    p = (p * x) + coeff->values.prec_data[i];
+  }
+
+  return dp;
 }

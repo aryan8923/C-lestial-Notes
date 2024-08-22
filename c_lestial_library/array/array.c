@@ -164,6 +164,10 @@ Vector *copy_Vector(Vector *V) {
 }
 
 Vector *range_vector(precision_t start, precision_t stop, precision_t step) {
+
+  // TODO : fix this function. The end point in the array is not matching with
+  //  the one in Python
+
   int vec_size = (int)((stop - start) / step);
   if (vec_size <= 0) {
     fprintf(stderr,
@@ -189,6 +193,53 @@ Vector *linspace_vector(precision_t start, precision_t stop, precision_t N) {
   }
 
   return V;
+}
+
+Vector *slice_vector(Vector *V, int *indices, int indices_size) {
+  // Create a new vector with the same dtype and the size of the indices array
+  Vector *new_vector = zero_vector(V->dtype, indices_size);
+
+  // Switch based on the dtype of the vector
+  switch (V->dtype) {
+  case INT:
+    for (int i = 0; i < indices_size; i++) {
+      if (indices[i] >= 0 && indices[i] < V->size) {
+        new_vector->values.int_data[i] = V->values.int_data[indices[i]];
+      } else {
+        fprintf(stderr, "Index out of bounds: %d\n", indices[i]);
+        exit(EXIT_FAILURE);
+      }
+    }
+    break;
+
+  case PREC:
+    for (int i = 0; i < indices_size; i++) {
+      if (indices[i] >= 0 && indices[i] < V->size) {
+        new_vector->values.prec_data[i] = V->values.prec_data[indices[i]];
+      } else {
+        fprintf(stderr, "Index out of bounds: %d\n", indices[i]);
+        exit(EXIT_FAILURE);
+      }
+    }
+    break;
+
+  case STRING:
+    for (int i = 0; i < indices_size; i++) {
+      if (indices[i] >= 0 && indices[i] < V->size) {
+        new_vector->values.string_data[i] = V->values.string_data[indices[i]];
+      } else {
+        fprintf(stderr, "Index out of bounds: %d\n", indices[i]);
+        exit(EXIT_FAILURE);
+      }
+    }
+    break;
+
+  default:
+    fprintf(stderr, "Unsupported data type\n");
+    exit(EXIT_FAILURE);
+  }
+
+  return new_vector;
 }
 
 /* Functions for basic arithmetic of arrays */
@@ -323,6 +374,24 @@ Vector *map_vector(precision_t (*func)(precision_t), Vector *V) {
     V_copy->values.prec_data[i] = (*func)(V->values.prec_data[i]);
   }
   return V_copy;
+}
+
+precision_t dot_vector_prec(Vector *A, Vector *B) {
+  precision_t sum = 0.0;
+
+  // test whether the size of the vector matches
+  if (A->size != B->size) {
+    fprintf(stderr,
+            "Size Mismatch Error: Vectors of unequal size found in function "
+            "dot_vector\n");
+    exit(EXIT_FAILURE);
+  }
+
+  for (int i = 0; i < A->size; i++) {
+    sum = sum + (A->values.prec_data[i] * B->values.prec_data[i]);
+  }
+
+  return sum;
 }
 
 /* functions for basic statistics for arrays*/

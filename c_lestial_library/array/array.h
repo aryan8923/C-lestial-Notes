@@ -38,12 +38,14 @@ Vector *array_to_vector_prec(int size, precision_t arr[]);
 Vector *copy_Vector(Vector *V);
 Vector *range_vector(precision_t start, precision_t stop, precision_t step);
 Vector *linspace_vector(precision_t start, precision_t stop, precision_t N);
+Vector *slice_vector(Vector *V, int *indices, int indices_size);
 
 /* Functions for basic arithmetic of arrays and vectors*/
 Vector *scale_vector_int(Vector *V, int scalar);
 Vector *scale_vector_prec(Vector *V, precision_t scalar);
 Vector *elem_arith_op_vectors(Vector *A, Vector *B, arith_oper o);
 Vector *map_vector(precision_t (*func)(precision_t), Vector *V);
+precision_t dot_vector_prec(Vector *A, Vector *B);
 
 /* functions for basic statistics */
 precision_t mean_vector(Vector *V);
