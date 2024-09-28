@@ -424,7 +424,7 @@ Vector *lin_system_gauss_elim(Matrix *A, Vector *B) {
   // This function makes changes to
 
   Matrix *A_copy = copy_Matrix(A);
-  Vector *B_copy = copy_Vector(B);
+  Vector *B_copy = copy_vector(B);
 
   Vector *X = zero_vector(PREC, B->size);
 
