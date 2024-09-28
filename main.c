@@ -17,17 +17,26 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 
 #include "c_lestial_library/array/array.h"
 #include "c_lestial_library/prec.h"
-
-#define ID_SIZE 3
+#include <stdio.h>
 
 int main() {
+  int data1[] = {1, 2, 3};
+  int data2[] = {4, 5, 6};
+  int data3[] = {7, 8, 9};
 
-  precision_t A_arr[] = {10, 20, 30, 40, 50};
-  int index_A[ID_SIZE] = {2, 3, 1};
+  Vector *vector1 = array_to_vector_int(LENGTH_ARR(data1), data1);
+  Vector *vector2 = array_to_vector_int(LENGTH_ARR(data2), data2);
+  Vector *vector3 = array_to_vector_int(LENGTH_ARR(data3), data3);
 
-  Vector *V = array_to_vector_prec(LENGTH_ARR(A_arr), A_arr);
+  // Concatenate vectors
+  Vector *result_vector = concat_vector(vector1, vector2, vector3, NULL);
 
-  view_vector(slice_vector(V, index_A, LENGTH_ARR(index_A)));
+  // Print result
+  view_vector(result_vector);
+  printf("\n");
+  view_vector(vector1);
 
+  // Free result vector
+  free_vector(result_vector);
   return 0;
 }
