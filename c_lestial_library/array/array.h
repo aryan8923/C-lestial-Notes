@@ -18,6 +18,7 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 #ifndef ARRAY_H
 #define ARRAY_H
 
+#include "../plots.h"
 #include "../prec.h"
 
 typedef struct {
@@ -96,5 +97,8 @@ precision_t median_vector(Vector *V);
 precision_t weighted_average_vector(Vector *V, Vector *weights);
 precision_t std_vector(Vector *V);
 precision_t variance_vector(Vector *V, int ddof);
+
+/* Functions for plotting */
+void plot_vector_y(Vector *V, PlotAttr *gp_attr);
 
 #endif

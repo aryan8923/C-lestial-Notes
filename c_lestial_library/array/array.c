@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License along with
 C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 */
 
+#include "../plots.h"
 #include "../prec.h"
 #include <math.h>
 #include <stdarg.h>
@@ -929,4 +930,36 @@ precision_t variance_vector(Vector *V, int ddof) {
   } else {
     return variance_sum / V->size; // Population variance
   }
+}
+
+/* Functions for plotting */
+
+void plot_vector_y(Vector *V, PlotAttr *gp_attr) {
+  FILE *gp = popen("gnuplot -persist", "w");
+  if (!gp) {
+    fprintf(stderr, "Error: could not open GNUplot.\n");
+    return;
+  }
+
+  // configure attributes
+  if (gp_attr->title.is_set)
+    fprintf(gp, "set title '%s'\n", gp_attr->title.title);
+  if (gp_attr->x_label.is_set)
+    fprintf(gp, "set xlabel '%s'\n", gp_attr->x_label.xlabel);
+  if (gp_attr->y_label.is_set)
+    fprintf(gp, "set ylabel '%s'\n", gp_attr->y_label.ylabel);
+  if (gp_attr->x_range.is_set)
+    fprintf(gp, "set xrange [%f:%f]\n", gp_attr->x_range.xmin,
+            gp_attr->x_range.xmax);
+  if (gp_attr->y_range.is_set)
+    fprintf(gp, "set yrange [%f:%f]\n", gp_attr->y_range.ymin,
+            gp_attr->y_range.ymax);
+
+  // put the vector data in stream
+  for (int i = 0; i < V->size; i++)
+    fprintf(gp, "%d %f\n", i, V->values.prec_data[i]);
+  fprintf(gp, "e\n");
+
+  fflush(gp);
+  pclose(gp);
 }

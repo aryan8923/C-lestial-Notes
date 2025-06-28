@@ -15,28 +15,10 @@ You should have received a copy of the GNU General Public License along with
 C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 */
 
-#include "c_lestial_library/array/array.h"
-#include "c_lestial_library/plots.h"
-#include "c_lestial_library/prec.h"
-#include <bits/types/struct_timeval.h>
+/* This file is a collection of functions to approximate scalar functions and
+ * expressions involving operators */
+
+#include "array/array.h"
+#include "prec.h"
+#include <math.h>
 #include <stdio.h>
-#include <stdlib.h>
-#include <sys/time.h>
-
-float timediff(struct timeval *start, struct timeval *end) {
-  return (end->tv_sec - start->tv_sec) + 1e-6 * (end->tv_usec - start->tv_usec);
-}
-
-int main() {
-
-  struct timeval start, end;
-  gettimeofday(&start, NULL);
-
-  Vector *V = range_vector(0, 10, 0.5);
-  view_vector(V);
-
-  gettimeofday(&end, NULL);
-  printf("%0.6f seconds\n", timediff(&start, &end));
-
-  return 0;
-}
