@@ -89,7 +89,7 @@ Vector *zero_vector(DataType dtype, int size) {
   case STRING:
     V->values.string_data = (char **)malloc(size * sizeof(char *));
     for (int i = 0; i < size; i++) {
-      V->values.string_data[i] = "0";
+      V->values.string_data[i] = strdup("0");
     }
     break;
   }
@@ -163,7 +163,6 @@ Vector *ones_vector(DataType dtype, int size) {
 
 Vector *array_to_vector_prec(int size, precision_t arr[]) {
   Vector *V = zero_vector(PREC, size);
-  V->dtype = PREC;
   V->size = size;
   for (int i = 0; i < size; i++) {
     V->values.prec_data[i] = arr[i];
@@ -173,7 +172,6 @@ Vector *array_to_vector_prec(int size, precision_t arr[]) {
 }
 Vector *array_to_vector_int(int size, int arr[]) {
   Vector *V = zero_vector(INT, size);
-  V->dtype = INT;
   V->size = size;
   for (int i = 0; i < size; i++) {
     V->values.int_data[i] = arr[i];
@@ -198,7 +196,7 @@ Vector *copy_vector(Vector *V) {
     break;
   case STRING:
     for (int i = 0; i < V->size; i++) {
-      V_copy->values.prec_data[i] = V->values.prec_data[i];
+      V_copy->values.prec_data[i] = V->values.string_data[i];
     }
     break;
   }
@@ -229,7 +227,7 @@ Vector *range_vector(precision_t start, precision_t stop, precision_t step) {
 Vector *linspace_vector(precision_t start, precision_t stop, int N) {
   Vector *V = zero_vector(PREC, N);
 
-  precision_t step = ((stop - start) / (precision_t)N);
+  precision_t step = ((stop - start) / (precision_t)(N - 1));
 
   for (int i = 0; i < N; i++) {
     V->values.prec_data[i] = start + ((precision_t)i * step);
@@ -481,6 +479,7 @@ void save_vector(const char *filename, Vector *vec) {
 
 Vector *load_vector(const char *filename) {
   FILE *file = fopen(filename, "rb");
+
   if (file == NULL) {
     fprintf(stderr, "Error opening file for reading\n");
     exit(EXIT_FAILURE);
@@ -493,11 +492,22 @@ Vector *load_vector(const char *filename) {
     exit(EXIT_FAILURE);
   }
 
-  // Read metadata
-  fread(&(vec->dtype), sizeof(DataType), 1, file);
-  fread(&(vec->size), sizeof(int), 1, file);
+  // Read metadata with checks
+  if (fread(&(vec->dtype), sizeof(DataType), 1, file) != 1) {
+    fprintf(stderr, "Error reading data type from file\n");
+    free(vec);
+    fclose(file);
+    exit(EXIT_FAILURE);
+  }
 
-  // Allocate memory for data
+  if (fread(&(vec->size), sizeof(int), 1, file) != 1) {
+    fprintf(stderr, "Error reading vector size from file\n");
+    free(vec);
+    fclose(file);
+    exit(EXIT_FAILURE);
+  }
+
+  // Allocate memory and read values
   switch (vec->dtype) {
   case INT:
     vec->values.int_data = (int *)malloc(vec->size * sizeof(int));
@@ -507,8 +517,16 @@ Vector *load_vector(const char *filename) {
       fclose(file);
       exit(EXIT_FAILURE);
     }
-    fread(vec->values.int_data, sizeof(int), vec->size, file);
+    if (fread(vec->values.int_data, sizeof(int), vec->size, file) !=
+        vec->size) {
+      fprintf(stderr, "Error reading int data from file\n");
+      free(vec->values.int_data);
+      free(vec);
+      fclose(file);
+      exit(EXIT_FAILURE);
+    }
     break;
+
   case PREC:
     vec->values.prec_data =
         (precision_t *)malloc(vec->size * sizeof(precision_t));
@@ -518,8 +536,16 @@ Vector *load_vector(const char *filename) {
       fclose(file);
       exit(EXIT_FAILURE);
     }
-    fread(vec->values.prec_data, sizeof(precision_t), vec->size, file);
+    if (fread(vec->values.prec_data, sizeof(precision_t), vec->size, file) !=
+        vec->size) {
+      fprintf(stderr, "Error reading precision data from file\n");
+      free(vec->values.prec_data);
+      free(vec);
+      fclose(file);
+      exit(EXIT_FAILURE);
+    }
     break;
+
   case STRING:
     vec->values.string_data = (char **)malloc(vec->size * sizeof(char *));
     if (vec->values.string_data == NULL) {
@@ -528,19 +554,48 @@ Vector *load_vector(const char *filename) {
       fclose(file);
       exit(EXIT_FAILURE);
     }
+
     for (int i = 0; i < vec->size; i++) {
       size_t len;
-      fread(&len, sizeof(size_t), 1, file);
-      vec->values.string_data[i] = (char *)malloc(len * sizeof(char));
-      if (vec->values.string_data[i] == NULL) {
-        fprintf(stderr, "Memory allocation failed\n");
+      if (fread(&len, sizeof(size_t), 1, file) != 1) {
+        fprintf(stderr, "Error reading string length at index %d\n", i);
+        // Free previously allocated strings
+        for (int j = 0; j < i; j++)
+          free(vec->values.string_data[j]);
+        free(vec->values.string_data);
         free(vec);
         fclose(file);
         exit(EXIT_FAILURE);
       }
-      fread(vec->values.string_data[i], sizeof(char), len, file);
+
+      vec->values.string_data[i] = (char *)malloc(len * sizeof(char));
+      if (vec->values.string_data[i] == NULL) {
+        fprintf(stderr, "Memory allocation failed for string at index %d\n", i);
+        for (int j = 0; j < i; j++)
+          free(vec->values.string_data[j]);
+        free(vec->values.string_data);
+        free(vec);
+        fclose(file);
+        exit(EXIT_FAILURE);
+      }
+
+      if (fread(vec->values.string_data[i], sizeof(char), len, file) != len) {
+        fprintf(stderr, "Error reading string data at index %d\n", i);
+        for (int j = 0; j <= i; j++)
+          free(vec->values.string_data[j]);
+        free(vec->values.string_data);
+        free(vec);
+        fclose(file);
+        exit(EXIT_FAILURE);
+      }
     }
     break;
+
+  default:
+    fprintf(stderr, "Unknown data type encountered while loading vector\n");
+    free(vec);
+    fclose(file);
+    exit(EXIT_FAILURE);
   }
 
   fclose(file);
@@ -609,10 +664,15 @@ Vector *elem_arith_op_vectors(Vector *A, Vector *B, arith_oper o) {
           break;
         case DIV:
           for (int i = 0; i < A->size; i++) {
-            C->values.int_data[i] =
-                A->values.int_data[i] / B->values.int_data[i];
+            if (B->values.int_data[i] == 0) {
+              fprintf(stderr, "Error: Integer division by zero at index %d\n",
+                      i);
+              C->values.int_data[i] = 0; // or INT_MAX, or sentinel
+            } else {
+              C->values.int_data[i] =
+                  A->values.int_data[i] / B->values.int_data[i];
+            }
           }
-          break;
         case POW:
           for (int i = 0; i < A->size; i++) {
             C->values.int_data[i] =
@@ -644,8 +704,18 @@ Vector *elem_arith_op_vectors(Vector *A, Vector *B, arith_oper o) {
           break;
         case DIV:
           for (int i = 0; i < A->size; i++) {
+            if (fabs(B->values.prec_data[i]) < 1e-12) {
+              printf("Warning: Possible divide by zero at index %d", i);
+            }
             C->values.prec_data[i] =
                 A->values.prec_data[i] / B->values.prec_data[i];
+
+            if (isinf(C->values.prec_data[i])) {
+              printf("Warning: Result is infinity at index %d\n", i);
+            }
+            if (isnan(C->values.prec_data[i])) {
+              printf("Warning: Result is nan at index %d\n", i);
+            }
           }
           break;
         case POW:

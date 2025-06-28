@@ -35,7 +35,7 @@ typedef struct {
 Matrix *init_matrix(DataType dtype, int nrows, int ncols) {
   Matrix *mat = (Matrix *)malloc(sizeof(Matrix));
   if (!mat) {
-    fprintf(stderr, "Memory allocation failed for Matrix\n");
+    fprintf(stderr, "Memory allocation failed for Matrix struct\n");
     exit(EXIT_FAILURE);
   }
 
@@ -46,21 +46,60 @@ Matrix *init_matrix(DataType dtype, int nrows, int ncols) {
   switch (dtype) {
   case INT:
     mat->values.int_data = (int **)malloc(nrows * sizeof(int *));
+    if (!mat->values.int_data) {
+      fprintf(stderr, "Memory allocation failed for row pointers\n");
+      free(mat);
+      exit(EXIT_FAILURE);
+    }
+
     for (int i = 0; i < nrows; i++) {
       mat->values.int_data[i] = (int *)malloc(ncols * sizeof(int));
+      if (!mat->values.int_data[i]) {
+        fprintf(stderr, "Memory allocation failed for row %d\n", i);
+        for (int j = 0; j < i; j++) {
+          free(mat->values.int_data[j]);
+        }
+        free(mat->values.int_data);
+        free(mat);
+        exit(EXIT_FAILURE);
+      }
     }
     break;
+
   case PREC:
     mat->values.prec_data =
         (precision_t **)malloc(nrows * sizeof(precision_t *));
+    if (!mat->values.prec_data) {
+      fprintf(stderr, "Memory allocation failed for row pointers\n");
+      free(mat);
+      exit(EXIT_FAILURE);
+    }
+
     for (int i = 0; i < nrows; i++) {
       mat->values.prec_data[i] =
           (precision_t *)malloc(ncols * sizeof(precision_t));
+      if (!mat->values.prec_data[i]) {
+        fprintf(stderr, "Memory allocation failed for row %d\n", i);
+        for (int j = 0; j < i; j++) {
+          free(mat->values.prec_data[j]);
+        }
+        free(mat->values.prec_data);
+        free(mat);
+        exit(EXIT_FAILURE);
+      }
     }
     break;
+
   case STRING:
-    STRING_NOT_SUPP_ERROR;
+    fprintf(stderr, "String elements not yet supported for Matrices\n");
+    free(mat); // safe to free early since no inner mallocs were done
+    exit(EXIT_FAILURE);
     break;
+
+  default:
+    fprintf(stderr, "Unknown DataType in init_matrix\n");
+    free(mat);
+    exit(EXIT_FAILURE);
   }
 
   return mat;
@@ -293,7 +332,7 @@ Matrix *copy_Matrix(Matrix *M) {
 
 /* Basic matrix operations */
 
-Matrix *scale_matrix_int(Matrix *M, int scalar) {
+Matrix *scale_matrix_int(const Matrix *M, int scalar) {
   Matrix *M_scaled = zeros_matrix(M->dtype, M->nrows, M->ncols);
 
   if (M->dtype == INT) {
@@ -303,7 +342,7 @@ Matrix *scale_matrix_int(Matrix *M, int scalar) {
       }
     }
   } else {
-    fprintf(stderr, "Type Mismatch error when scaling the int type Matrix\n");
+    fprintf(stderr, "Type Mismatch error when scaling the INT type Matrix\n");
     exit(EXIT_FAILURE);
   }
 
@@ -313,14 +352,14 @@ Matrix *scale_matrix_int(Matrix *M, int scalar) {
 Matrix *scale_matrix_prec(Matrix *M, precision_t scalar) {
   Matrix *M_scaled = zeros_matrix(M->dtype, M->nrows, M->ncols);
 
-  if (M->dtype == INT) {
+  if (M->dtype == PREC) {
     for (int i = 0; i < M->nrows; i++) {
       for (int j = 0; j < M->ncols; j++) {
         M_scaled->values.prec_data[i][j] = scalar * M->values.prec_data[i][j];
       }
     }
   } else {
-    fprintf(stderr, "Type Mismatch error when scaling the int type Matrix\n");
+    fprintf(stderr, "Type Mismatch error when scaling the PREC type Matrix\n");
     exit(EXIT_FAILURE);
   }
 
@@ -337,22 +376,24 @@ Matrix *matmul(Matrix *A, Matrix *B) {
     switch (A->dtype) {
     case INT:
       for (int i = 0; i < A->nrows; i++) {
-        for (int k = 0; k < B->ncols; k++) {
+        for (int k = 0; k < A->ncols; k++) {
           for (int j = 0; j < B->ncols; j++) {
             C->values.int_data[i][j] +=
                 A->values.int_data[i][k] * B->values.int_data[k][j];
           }
         }
       }
+      break;
     case PREC:
       for (int i = 0; i < A->nrows; i++) {
-        for (int k = 0; k < B->ncols; k++) {
+        for (int k = 0; k < A->ncols; k++) {
           for (int j = 0; j < B->ncols; j++) {
             C->values.prec_data[i][j] +=
                 A->values.prec_data[i][k] * B->values.prec_data[k][j];
           }
         }
       }
+      break;
     case STRING:
       STRING_NOT_SUPP_ERROR;
     }
@@ -419,9 +460,10 @@ precision_t trace_matrix(Matrix *A) {
 
 /* Functions to solve linear equations */
 
-Vector *lin_system_gauss_elim(Matrix *A, Vector *B) {
+Vector *lin_system_gauss_elim(const Matrix *A, const Vector *B) {
   /* This function solves the linear equation AX = B */
   // This function makes changes to
+  // A and B input matrices will not be modified
 
   Matrix *A_copy = copy_Matrix(A);
   Vector *B_copy = copy_vector(B);
@@ -694,6 +736,11 @@ Matrix *inverse_matrix(Matrix *A) {
   // instead
 
   Inverse = matmul(inv_Upper, inv_Lower);
+
+  free_matrix(Upper);
+  free_matrix(Lower);
+  free_matrix(inv_Upper);
+  free_matrix(inv_Lower);
 
   return Inverse;
 }
