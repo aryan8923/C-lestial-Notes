@@ -18,8 +18,8 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 #ifndef ARRAY_H
 #define ARRAY_H
 
+#include "../defs.h"
 #include "../plots.h"
-#include "../prec.h"
 
 typedef struct {
   DataType dtype;

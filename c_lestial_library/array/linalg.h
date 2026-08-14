@@ -18,7 +18,7 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 #ifndef LINALG_H
 #define LINALG_H
 
-#include "../prec.h"
+#include "../defs.h"
 #include "array.h"
 
 #define NROWS_MATRIX(matrix) sizeof(matrix) / sizeof(matrix[0])

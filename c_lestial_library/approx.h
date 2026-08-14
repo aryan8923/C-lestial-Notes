@@ -19,6 +19,6 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 #define APPROX_H
 
 #include "array/array.h"
-#include "prec.h"
+#include "defs.h"
 
 #endif

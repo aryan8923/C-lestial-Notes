@@ -19,7 +19,7 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 #define MATHFUNCS_H
 
 #include "array/array.h"
-#include "prec.h"
+#include "defs.h"
 
 /* Functions related to polynomials */
 

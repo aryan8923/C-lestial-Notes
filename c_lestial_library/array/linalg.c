@@ -15,7 +15,7 @@ You should have received a copy of the GNU General Public License along with
 C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 */
 
-#include "../prec.h"
+#include "../defs.h"
 #include "array.h"
 #include <math.h>
 #include <stdio.h>

@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License along with
 C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 */
 
+#include "../defs.h"
 #include "../plots.h"
-#include "../prec.h"
 #include <math.h>
 #include <stdarg.h>
 #include <stdio.h>
@@ -196,7 +196,7 @@ Vector *copy_vector(Vector *V) {
     break;
   case STRING:
     for (int i = 0; i < V->size; i++) {
-      V_copy->values.prec_data[i] = V->values.string_data[i];
+      V_copy->values.string_data[i] = V->values.string_data[i];
     }
     break;
   }

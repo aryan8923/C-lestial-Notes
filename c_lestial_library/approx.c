@@ -19,6 +19,6 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
  * expressions involving operators */
 
 #include "array/array.h"
-#include "prec.h"
+#include "defs.h"
 #include <math.h>
 #include <stdio.h>

@@ -18,7 +18,7 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 #ifndef DATAFRAMES_H
 #define DATAFRAMES_H
 
-#include "prec.h"
+#include "defs.h"
 
 // Definitions related to data frames
 typedef enum { INT, PREC, STRING } DataType;

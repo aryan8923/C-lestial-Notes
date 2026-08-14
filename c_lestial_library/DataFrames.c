@@ -16,7 +16,7 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 */
 
 #include "array/array.h"
-#include "prec.h"
+#include "defs.h"
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>

@@ -16,7 +16,7 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 */
 
 #include "c_lestial_library/array/linalg.h"
-#include "c_lestial_library/prec.h"
+#include "c_lestial_library/defs.h"
 #include <bits/types/struct_timeval.h>
 #include <stdio.h>
 #include <stdlib.h>

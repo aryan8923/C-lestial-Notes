@@ -15,8 +15,8 @@ You should have received a copy of the GNU General Public License along with
 C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 */
 
-#ifndef PRECISION_H
-#define PRECISION_H
+#ifndef DEFS_H
+#define DEFS_H
 
 #ifndef PRECISION
 #define PRECISION double
@@ -24,9 +24,7 @@ C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 
 typedef PRECISION precision_t;
 
-typedef union { // stores the value of Data in a column depending on the
-                // specified data datatype. Union because the column can only be
-                // of one of the following type
+typedef union {
   int *int_data;
   precision_t *prec_data;
   char **string_data;
@@ -41,4 +39,4 @@ typedef enum { INT, PREC, STRING } DataType;
 
 typedef enum { ADD, SUB, MUL, DIV, POW } arith_oper;
 
-#endif // PRECISION_H
+#endif /* DEFS_H */
