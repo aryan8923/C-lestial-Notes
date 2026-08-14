@@ -15,6 +15,7 @@ You should have received a copy of the GNU General Public License along with
 C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 */
 
+#include "c_lestial_library/array/array.h"
 #include "c_lestial_library/array/linalg.h"
 #include "c_lestial_library/defs.h"
 #include <bits/types/struct_timeval.h>
@@ -33,14 +34,14 @@ int main() {
   // ------------------------------------------------------------------------------------------------------
   //   CODE BETWEEEN THESE LINES
 
-  precision_t A_arr[3][3] = {{2, 3, 1}, {1, 1, 2}, {2, 3, 4}};
+  precision_t A_arr[3] = {2, 3, 1};
 
-  Matrix *A = Array2d_to_Matrix_prec(3, 3, A_arr);
+  Vector *A = array_to_vector_prec(3, A_arr);
 
-  view_matrix(inverse_matrix(A));
+  view_vector(A);
 
-  printf("%lf\n", determinant(A));
   // ------------------------------------------------------------------------------------------------------
+
   gettimeofday(&end, NULL);
   printf("\n\nTime Elapsed : %0.6f seconds\n", timediff(&start, &end));
 
