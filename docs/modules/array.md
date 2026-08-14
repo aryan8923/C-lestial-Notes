@@ -1,31 +1,4 @@
-- [[#Vector|Vector]]
-- [[#percentile_method|percentile_method]]
-			- [[#Values|Values]]
-- [[#Functions to view array and vector elements|Functions to view array and vector elements]]
-	- [[#Functions to view array and vector elements#view_vector|view_vector]]
-	- [[#Functions to view array and vector elements#view_array|view_array]]
-- [[#Functions to initialise array and vectors|Functions to initialise array and vectors]]
-		- [[#view_array#zero_vector|zero_vector]]
-		- [[#view_array#ones_vector|ones_vector]]
-		- [[#view_array#free_vector|free_vector]]
-		- [[#view_array#array_to_vector|array_to_vector]]
-		- [[#view_array#copy_vector|copy_vector]]
-		- [[#view_array#range_vector|range_vector]]
-		- [[#view_array#linspace_vector|linspace_vector]]
-		- [[#view_array#slice_vector|slice_vector]]
-- [[#Functions for manipulation of vectors and arrays|Functions for manipulation of vectors and arrays]]
-		- [[#view_array#concat_vector|concat_vector]]
-		- [[#view_array#append_vector|append_vector]]
-- [[#Vector I/O|Vector I/O]]
-- [[#Mathematical Operations|Mathematical Operations]]
-		- [[#view_array#Arithmetic Operations|Arithmetic Operations]]
-		- [[#view_array#map_vector|map_vector]]
-- [[#Functions for sorting , searching, counting and statistics|Functions for sorting , searching, counting and statistics]]
-		- [[#view_array#sort_vector|sort_vector]]
-		- [[#view_array#Statistics|Statistics]]
-- [[#Functions for plotting|Functions for plotting]]
-		- [[#view_array#plot_vector_y|plot_vector_y]]
-
+**Tip**: Use github outline to navigate. 
 
 # array.c
 
