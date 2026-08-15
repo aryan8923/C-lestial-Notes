@@ -1,4 +1,3 @@
-**Tip**: Use github outline to navigate. 
 
 # array.c
 

@@ -1,6 +1,5 @@
 # `defs.h`
 
-## Description
 
 `defs.h` contains common definitions and types for the C-lestial library. Other library modules can include this file when they need these definitions.
 
