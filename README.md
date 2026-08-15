@@ -10,8 +10,15 @@ I will be writing the functions and upload them under [GNU GPLv3.0](https://www.
 
 ## Usage
 
-Download the `c_lestial_library` folder from the git repo. Put the folder wherever your main file is. Set the TARGET variable in the Makefile to your file's name (by default set to main.c) Keep the Makefile in the same folder as your code. 
+Download the `c_lestial_library` folder from the git repo. Put the folder in the same directory as your main file. 
 
+Set the MAIN variable in the Makefile to your file's name (by default set to main.c) 
 
-Run ```make``` in terminal. The code by default compiles to "output". (You can rename the output file by setting the OUTPUT variable in Makefile)
+Keep the Makefile in the same folder as your code. 
+
+Run ```make``` in terminal. 
+
+The code by default compiles to "main". (You can rename the output file by setting the TARGET variable in Makefile)
+
+To remove the compiled executable and object files, run ```make clean```
 

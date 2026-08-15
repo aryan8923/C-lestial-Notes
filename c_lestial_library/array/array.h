@@ -15,6 +15,9 @@ You should have received a copy of the GNU General Public License along with
 C-lestial library. If not, see <https://www.gnu.org/licenses/>.'
 */
 
+// TODO: the save arrays need to save in more portable format. Saving in binary,
+// is that portable or dependent on architecture? Check.
+
 #ifndef ARRAY_H
 #define ARRAY_H
 
@@ -29,18 +32,18 @@ typedef struct {
 
 typedef enum {
   INVERTED_CDF,
-  AVERAGED_INVERTED_CDF,
-  CLOSEST_OBSERVATION,
-  INTERPOLATED_INVERTED_CDF,
-  HAZEN,
-  WEIBULL,
+  // AVERAGED_INVERTED_CDF,
+  // CLOSEST_OBSERVATION,
+  // INTERPOLATED_INVERTED_CDF,
+  // HAZEN,
+  // WEIBULL,
   LINEAR,
-  MEDIAN_UNBIASED,
-  NORMAL_UNBIASED,
-  LOWER,
-  HIGHER,
-  MIDPOINT,
-  NEAREST
+  // MEDIAN_UNBIASED,
+  // NORMAL_UNBIASED,
+  // LOWER,
+  // HIGHER,
+  // MIDPOINT,
+  // NEAREST
 } percentile_method;
 
 #define LENGTH_ARR(arr) sizeof(arr) / sizeof(*arr) /* get size of array */
@@ -56,7 +59,7 @@ Vector *array_to_vector_prec(int size, precision_t arr[]);
 Vector *array_to_vector_int(int size, int arr[]);
 Vector *copy_vector(Vector *V);
 Vector *range_vector(precision_t start, precision_t stop, precision_t step);
-Vector *linspace_vector(precision_t start, precision_t stop, precision_t N);
+Vector *linspace_vector(precision_t start, precision_t stop, int N);
 Vector *slice_vector(Vector *V, int *indices, int indices_size);
 
 /* Functions for manipulation of vectors and arrays */

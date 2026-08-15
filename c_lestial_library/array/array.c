@@ -37,28 +37,44 @@ typedef enum {
 /* function to view array and vector elements */
 
 void view_vector(Vector *A) {
+
+  if (A == NULL || A->size == 0) {
+    fprintf(stderr, "Error: Size 0 vector is invalid.\n");
+    exit(EXIT_FAILURE);
+  }
+
   printf("\n%d-element Vector {", A->size);
+
   switch (A->dtype) {
+
   case INT:
-    printf("int}\n\n[ %d", A->values.int_data[0]);
-    for (int i = 1; i < A->size - 1; i++) {
-      printf(" , %d", A->values.int_data[i]);
+    printf("int}\n\n[ ");
+    for (int i = 0; i < A->size; i++) {
+      printf("%d", A->values.int_data[i]);
+      if (i < A->size - 1)
+        printf(" , ");
     }
-    printf(" , %d ]\n", A->values.int_data[A->size - 1]);
+    printf(" ]\n");
     break;
+
   case PREC:
-    printf("precision_t}\n\n[ %lf", A->values.prec_data[0]);
-    for (int i = 1; i < A->size - 1; i++) {
-      printf(" , %lf", A->values.prec_data[i]);
+    printf("precision_t}\n\n[ ");
+    for (int i = 0; i < A->size; i++) {
+      printf("%lf", A->values.prec_data[i]);
+      if (i < A->size - 1)
+        printf(" , ");
     }
-    printf(" , %lf ]\n", A->values.prec_data[A->size - 1]);
+    printf(" ]\n");
     break;
+
   case STRING:
-    printf("string}\n\n[ %s", A->values.string_data[0]);
-    for (int i = 1; i < A->size - 1; i++) {
-      printf(" , %s", A->values.string_data[i]);
+    printf("string}\n\n[ ");
+    for (int i = 0; i < A->size; i++) {
+      printf("%s", A->values.string_data[i]);
+      if (i < A->size - 1)
+        printf(" , ");
     }
-    printf(" , %s ]\n", A->values.string_data[A->size - 1]);
+    printf(" ]\n");
     break;
   }
 }
@@ -69,7 +85,7 @@ Vector *zero_vector(DataType dtype, int size) {
   Vector *V = (Vector *)malloc(sizeof(Vector));
 
   if (V == NULL) {
-    fprintf(stderr, "Memory allocation failed for Vector\n");
+    fprintf(stderr, "Error: Memory allocation failed for Vector\n");
     exit(EXIT_FAILURE);
   }
 
@@ -128,35 +144,38 @@ void free_vector(Vector *V) {
 }
 
 Vector *ones_vector(DataType dtype, int size) {
-  Vector *V = (Vector *)malloc(sizeof(Vector));
 
-  if (V == NULL) {
-    fprintf(stderr, "Memory allocation failed for Vector\n");
-    exit(EXIT_FAILURE);
-  }
+  Vector *V = malloc(sizeof(Vector));
+
+  V->dtype = dtype;
+  V->size = size;
 
   switch (dtype) {
-  case INT:
-    V->values.int_data = (int *)malloc(size * sizeof(int));
-    for (int i = 0; i < size; i++) {
-      V->values.int_data[i] = 1;
-    }
-    break;
-  case PREC:
-    V->values.prec_data = (precision_t *)malloc(size * sizeof(precision_t));
-    for (int i = 0; i < size; i++) {
-      V->values.prec_data[i] = 1.0;
-    }
-    break;
-  case STRING:
-    V->values.string_data = (char **)malloc(size * sizeof(char **));
-    for (int i = 0; i < size; i++) {
-      V->values.string_data[i] = "1";
-    }
-  }
 
-  V->size = size;
-  V->dtype = dtype;
+  case INT:
+    V->values.int_data = malloc(size * sizeof(int));
+
+    for (int i = 0; i < size; i++)
+      V->values.int_data[i] = 1;
+
+    break;
+
+  case PREC:
+    V->values.prec_data = malloc(size * sizeof(precision_t));
+
+    for (int i = 0; i < size; i++)
+      V->values.prec_data[i] = 1.0;
+
+    break;
+
+  case STRING:
+    V->values.string_data = malloc(size * sizeof(char *));
+
+    for (int i = 0; i < size; i++)
+      V->values.string_data[i] = strdup("1");
+
+    break;
+  }
 
   return V;
 }
@@ -196,7 +215,7 @@ Vector *copy_vector(Vector *V) {
     break;
   case STRING:
     for (int i = 0; i < V->size; i++) {
-      V_copy->values.string_data[i] = V->values.string_data[i];
+      V_copy->values.string_data[i] = strdup(V->values.string_data[i]);
     }
     break;
   }
@@ -206,15 +225,23 @@ Vector *copy_vector(Vector *V) {
 
 Vector *range_vector(precision_t start, precision_t stop, precision_t step) {
 
-  // TODO : fix this function. The end point in the array is not matching with
-  //  the one in Python
-
-  int vec_size = (int)((stop - start) / step);
-  if (vec_size <= 0) {
-    fprintf(stderr,
-            "Error: Invalid start/stop/step input in function range_vector.\n");
+  if (step == 0) {
+    fprintf(stderr, "Error: step cannot be zero in range_vector.\n");
     exit(EXIT_FAILURE);
   }
+
+  if ((step > 0 && start >= stop) || (step < 0 && start <= stop)) {
+    fprintf(stderr, "Error: Invalid start/stop/step input in range_vector.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  int vec_size = (int)ceil((stop - start) / step);
+
+  if (vec_size <= 0) {
+    fprintf(stderr, "Error: Invalid start/stop/step input in range_vector.\n");
+    exit(EXIT_FAILURE);
+  }
+
   Vector *V = zero_vector(PREC, vec_size);
 
   for (int i = 0; i < vec_size; i++) {
@@ -225,9 +252,25 @@ Vector *range_vector(precision_t start, precision_t stop, precision_t step) {
 }
 
 Vector *linspace_vector(precision_t start, precision_t stop, int N) {
+
+  printf("linspace: N = %d\n", N);
+
+  if (N <= 0) {
+    fprintf(stderr, "Error: N must be greater than zero in linspace_vector.\n");
+    exit(EXIT_FAILURE);
+  }
+
   Vector *V = zero_vector(PREC, N);
 
-  precision_t step = ((stop - start) / (precision_t)(N - 1));
+  printf("linspace: V->size = %d\n", V->size);
+  printf("linspace: V->dtype = %d\n", V->dtype);
+
+  if (N == 1) {
+    V->values.prec_data[0] = start;
+    return V;
+  }
+
+  precision_t step = (stop - start) / (precision_t)(N - 1);
 
   for (int i = 0; i < N; i++) {
     V->values.prec_data[i] = start + ((precision_t)i * step);
@@ -247,7 +290,7 @@ Vector *slice_vector(Vector *V, int *indices, int indices_size) {
       if (indices[i] >= 0 && indices[i] < V->size) {
         new_vector->values.int_data[i] = V->values.int_data[indices[i]];
       } else {
-        fprintf(stderr, "Index out of bounds: %d\n", indices[i]);
+        fprintf(stderr, "Index out of bounds error: %d\n", indices[i]);
         exit(EXIT_FAILURE);
       }
     }
@@ -258,7 +301,7 @@ Vector *slice_vector(Vector *V, int *indices, int indices_size) {
       if (indices[i] >= 0 && indices[i] < V->size) {
         new_vector->values.prec_data[i] = V->values.prec_data[indices[i]];
       } else {
-        fprintf(stderr, "Index out of bounds: %d\n", indices[i]);
+        fprintf(stderr, "Index out of bounds error: %d\n", indices[i]);
         exit(EXIT_FAILURE);
       }
     }
@@ -267,16 +310,17 @@ Vector *slice_vector(Vector *V, int *indices, int indices_size) {
   case STRING:
     for (int i = 0; i < indices_size; i++) {
       if (indices[i] >= 0 && indices[i] < V->size) {
-        new_vector->values.string_data[i] = V->values.string_data[indices[i]];
+        new_vector->values.string_data[i] =
+            strdup(V->values.string_data[indices[i]]);
       } else {
-        fprintf(stderr, "Index out of bounds: %d\n", indices[i]);
+        fprintf(stderr, "Index out of bounds error: %d\n", indices[i]);
         exit(EXIT_FAILURE);
       }
     }
     break;
 
   default:
-    fprintf(stderr, "Unsupported data type\n");
+    fprintf(stderr, "Error: Unsupported data type\n");
     exit(EXIT_FAILURE);
   }
 
@@ -673,6 +717,7 @@ Vector *elem_arith_op_vectors(Vector *A, Vector *B, arith_oper o) {
                   A->values.int_data[i] / B->values.int_data[i];
             }
           }
+          break;
         case POW:
           for (int i = 0; i < A->size; i++) {
             C->values.int_data[i] =
@@ -874,23 +919,34 @@ precision_t ptp_vector(Vector *V) { return max_vector(V) - min_vector(V); }
 
 precision_t percentile_vector(Vector *V, precision_t q,
                               percentile_method method) {
-  // Check if Percentile q is in the range [0, 100]
-  if (q < 0 || q > 100) {
-    fprintf(stderr, "ValueError: Percentiles must be in the range [0, 100]\n");
+
+  if (V == NULL || V->size == 0) {
+    fprintf(stderr, "Error: Cannot calculate percentile of an empty vector.\n");
     exit(EXIT_FAILURE);
   }
 
-  precision_t rank, frac, percentile = 0;
-  int rank_rounded;
+  if (V->dtype != PREC) {
+    fprintf(stderr, "Error: percentile_vector requires a PREC vector.\n");
+    exit(EXIT_FAILURE);
+  }
 
-  // Create a copy of the vector and sort it
+  if (q < 0 || q > 100) {
+    fprintf(stderr, "ValueError: Percentiles must be in the range [0, 100].\n");
+    exit(EXIT_FAILURE);
+  }
+
   Vector *V_copy = copy_vector(V);
   sort_vector(V_copy, 1);
 
+  precision_t rank, frac, percentile;
+  int rank_rounded;
+
   switch (method) {
+
   case INVERTED_CDF:
     rank = (q * V_copy->size) / 100.0;
     rank_rounded = (int)ceil(rank);
+
     if (rank_rounded <= 0) {
       percentile = V_copy->values.prec_data[0];
     } else if (rank_rounded >= V_copy->size) {
@@ -901,16 +957,22 @@ precision_t percentile_vector(Vector *V, precision_t q,
     break;
 
   case LINEAR:
+    if (q == 100) {
+      percentile = V_copy->values.prec_data[V_copy->size - 1];
+      break;
+    }
+
     rank = (q * (V_copy->size - 1)) / 100.0;
     rank_rounded = (int)floor(rank);
     frac = rank - rank_rounded;
+
     percentile = V_copy->values.prec_data[rank_rounded] +
                  frac * (V_copy->values.prec_data[rank_rounded + 1] -
                          V_copy->values.prec_data[rank_rounded]);
     break;
 
   default:
-    fprintf(stderr, "Unsupported percentile method.\n");
+    fprintf(stderr, "Error: Unsupported percentile method.\n");
     free_vector(V_copy);
     exit(EXIT_FAILURE);
   }
