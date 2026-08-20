@@ -1,5 +1,6 @@
 # C - lestial 
 Documentation Page is [here](docs/docs.md) 
+Notes are [here](notes/notes.md)
 
 This is the official git repository for the C-lestial library. C-lestial is a project that I have started so as to learn numerical analysis. It contains notes, codes and demonstrations written in C. I wish to learn numerical analysis as well, so I read textbooks, research articles, etc and upload the notes here.
 

@@ -244,50 +244,76 @@ Matrix *zeros_matrix(DataType dtype, int nrows, int ncols) {
 }
 
 Vector *matrix_to_vector(Matrix *M, int index, int axis) {
-  // axis = 0 means index'th column is to be chosen
+
+  if (M == NULL) {
+    fprintf(stderr, "Error: Matrix is NULL in matrix_to_vector.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (axis != 0 && axis != 1) {
+    fprintf(stderr, "Error: axis must be 0 or 1 in matrix_to_vector.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (axis == 0 && (index < 0 || index >= M->ncols)) {
+    fprintf(stderr, "Error: Column index out of bounds.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (axis == 1 && (index < 0 || index >= M->nrows)) {
+    fprintf(stderr, "Error: Row index out of bounds.\n");
+    exit(EXIT_FAILURE);
+  }
 
   switch (M->dtype) {
-  case INT:
+
+  case INT: {
     if (axis == 0) {
       Vector *V = zero_vector(INT, M->nrows);
+
       for (int i = 0; i < M->nrows; i++) {
-        V->values.int_data[i] = M->values.int_data[index][i];
-      }
-      return V;
-    } else if (axis == 1) {
-      Vector *V = zero_vector(INT, M->ncols);
-      for (int i = 0; i < M->ncols; i++) {
         V->values.int_data[i] = M->values.int_data[i][index];
       }
-    } else {
-      fprintf(stderr, "Incomatible value of axis in matrix_to_vector "
-                      "(Allowed axis is 0 or 1)\n");
-      return NULL;
-      exit(EXIT_FAILURE);
-    }
 
-  case PREC:
+      return V;
+
+    } else {
+      Vector *V = zero_vector(INT, M->ncols);
+
+      for (int i = 0; i < M->ncols; i++) {
+        V->values.int_data[i] = M->values.int_data[index][i];
+      }
+
+      return V;
+    }
+  }
+
+  case PREC: {
     if (axis == 0) {
       Vector *V = zero_vector(PREC, M->nrows);
+
       for (int i = 0; i < M->nrows; i++) {
-        V->values.prec_data[i] = M->values.prec_data[index][i];
-      }
-      return V;
-    } else if (axis == 1) {
-      Vector *V = zero_vector(PREC, M->ncols);
-      for (int i = 0; i < M->ncols; i++) {
         V->values.prec_data[i] = M->values.prec_data[i][index];
       }
+
+      return V;
+
     } else {
-      fprintf(stderr, "Incomatible value of axis in matrix_to_vector "
-                      "(Allowed axis is 0 or 1)\n");
-      return NULL;
-      exit(EXIT_FAILURE);
+      Vector *V = zero_vector(PREC, M->ncols);
+
+      for (int i = 0; i < M->ncols; i++) {
+        V->values.prec_data[i] = M->values.prec_data[index][i];
+      }
+
+      return V;
     }
+  }
+
   case STRING:
     STRING_NOT_SUPP_ERROR;
-    return NULL;
+    exit(EXIT_FAILURE);
   }
+
   return NULL;
 }
 
@@ -367,36 +393,51 @@ Matrix *scale_matrix_prec(Matrix *M, precision_t scalar) {
 }
 
 Matrix *matmul(Matrix *A, Matrix *B) {
-  Matrix *C = zeros_matrix(A->dtype, A->nrows, B->ncols);
-  if (A->ncols != B->nrows) {
-    fprintf(stderr, "Invalid dimensions for mat_mul");
-    exit(EXIT_FAILURE);
-  } else {
 
-    switch (A->dtype) {
-    case INT:
-      for (int i = 0; i < A->nrows; i++) {
-        for (int k = 0; k < A->ncols; k++) {
-          for (int j = 0; j < B->ncols; j++) {
-            C->values.int_data[i][j] +=
-                A->values.int_data[i][k] * B->values.int_data[k][j];
-          }
+  if (A == NULL || B == NULL) {
+    fprintf(stderr, "Error: NULL matrix in matmul.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (A->ncols != B->nrows) {
+    fprintf(stderr, "Error: Invalid dimensions for matrix multiplication.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (A->dtype != B->dtype) {
+    fprintf(stderr, "Error: Matrix datatype mismatch in matmul.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  Matrix *C = zeros_matrix(A->dtype, A->nrows, B->ncols);
+
+  switch (A->dtype) {
+
+  case INT:
+    for (int i = 0; i < A->nrows; i++) {
+      for (int k = 0; k < A->ncols; k++) {
+        for (int j = 0; j < B->ncols; j++) {
+          C->values.int_data[i][j] +=
+              A->values.int_data[i][k] * B->values.int_data[k][j];
         }
       }
-      break;
-    case PREC:
-      for (int i = 0; i < A->nrows; i++) {
-        for (int k = 0; k < A->ncols; k++) {
-          for (int j = 0; j < B->ncols; j++) {
-            C->values.prec_data[i][j] +=
-                A->values.prec_data[i][k] * B->values.prec_data[k][j];
-          }
-        }
-      }
-      break;
-    case STRING:
-      STRING_NOT_SUPP_ERROR;
     }
+    break;
+
+  case PREC:
+    for (int i = 0; i < A->nrows; i++) {
+      for (int k = 0; k < A->ncols; k++) {
+        for (int j = 0; j < B->ncols; j++) {
+          C->values.prec_data[i][j] +=
+              A->values.prec_data[i][k] * B->values.prec_data[k][j];
+        }
+      }
+    }
+    break;
+
+  case STRING:
+    STRING_NOT_SUPP_ERROR;
+    exit(EXIT_FAILURE);
   }
 
   return C;
@@ -465,21 +506,32 @@ Vector *lin_system_gauss_elim(const Matrix *A, const Vector *B) {
   // This function makes changes to
   // A and B input matrices will not be modified
 
+  if (A == NULL || B == NULL) {
+    fprintf(stderr, "Error: NULL input in lin_system_gauss_elim.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (A->dtype != PREC || B->dtype != PREC) {
+    fprintf(stderr,
+            "Error: lin_system_gauss_elim requires PREC matrix and vector.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (A->nrows != A->ncols) {
+    fprintf(stderr,
+            "Error: Matrix A in lin_system_gauss_elim is not square.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (A->nrows != B->size) {
+    fprintf(stderr, "Error: Matrix A and Vector B have unequal sizes.\n");
+    exit(EXIT_FAILURE);
+  }
+
   Matrix *A_copy = copy_Matrix(A);
   Vector *B_copy = copy_vector(B);
 
   Vector *X = zero_vector(PREC, B->size);
-
-  if (A->nrows != A->ncols) {
-    fprintf(stderr,
-            "Error: \"A\" Matrix in lin_system_gauss_elim not square.\n");
-    exit(EXIT_FAILURE);
-  }
-  if (A->nrows != B->size) {
-    fprintf(stderr,
-            "Error: Matrix \"A\" and Vector \"B\" have unequal sizes. \n");
-    exit(EXIT_FAILURE);
-  }
 
   for (int i = 0; i < A->nrows; i++) {
     // Pivoting
@@ -493,6 +545,14 @@ Vector *lin_system_gauss_elim(const Matrix *A, const Vector *B) {
           fabs(A_copy->values.prec_data[maxRow][i])) {
         maxRow = k;
       }
+    }
+    // Check for a zero pivot
+    if (fabs(A_copy->values.prec_data[maxRow][i]) < 1e-12) {
+      fprintf(stderr, "Error: Singular matrix in lin_system_gauss_elim.\n");
+      free_matrix(A_copy);
+      free_vector(B_copy);
+      free_vector(X);
+      exit(EXIT_FAILURE);
     }
 
     // Now you know which row has the greatest ith element (absolute)
@@ -533,62 +593,63 @@ Vector *lin_system_gauss_elim(const Matrix *A, const Vector *B) {
 }
 
 void LU_decomp(Matrix *A, Matrix *Lower, Matrix *Upper) {
-  // This function takes a square matrix and finds its "LU decomposed" form:
-  // LU = A.
-  // The L and U matrices are to be stored in Lower and Upper Matrix.
+
+  if (A == NULL || Lower == NULL || Upper == NULL) {
+    fprintf(stderr, "Error: NULL matrix in LU_decomp.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (A->dtype != PREC || Lower->dtype != PREC || Upper->dtype != PREC) {
+    fprintf(stderr, "Error: LU_decomp requires PREC matrices.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (A->nrows != A->ncols) {
+    fprintf(stderr, "Error: Matrix A in LU_decomp must be square.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (Lower->nrows != A->nrows || Lower->ncols != A->ncols ||
+      Upper->nrows != A->nrows || Upper->ncols != A->ncols) {
+    fprintf(stderr, "Error: Dimension mismatch in LU_decomp.\n");
+    exit(EXIT_FAILURE);
+  }
 
   int N = A->nrows;
 
-  if (A->nrows != A->ncols) {
-    fprintf(stderr,
-            "Error: Matrix \"A\" in LU_decomp function is not square\n");
-    exit(EXIT_FAILURE);
-  }
-  if (Lower->ncols != Lower->nrows) {
-    fprintf(stderr,
-            "Error: Matrix \"Lower\" in LU_decomp function is not square\n");
-    exit(EXIT_FAILURE);
-  }
-  if (Upper->ncols != Upper->nrows) {
-    fprintf(stderr,
-            "Error: Matrix \"Upper\" in LU_decomp function is not square\n");
-    exit(EXIT_FAILURE);
-  }
-  if ((A->nrows != Lower->nrows) || (A->nrows != A->ncols)) {
-    fprintf(stderr, "Error: Dimension mismatch between Matrix \"A\" and the "
-                    "other matrix in LU_decomp function\n");
-    exit(EXIT_FAILURE);
-  }
-
-  precision_t sum;
-
-  // Initialize Lower to identity matrix and Upper to zero matrix
   for (int i = 0; i < N; i++) {
     for (int j = 0; j < N; j++) {
-      if (i == j) {
-        Lower->values.prec_data[i][j] = 1.0;
-      } else {
-        Lower->values.prec_data[i][j] = 0.0;
-      }
+      Lower->values.prec_data[i][j] = (i == j) ? 1.0 : 0.0;
       Upper->values.prec_data[i][j] = 0.0;
     }
   }
 
   for (int j = 0; j < N; j++) {
-    for (int i = 0; i < j + 1; i++) {
-      sum = 0.0;
+
+    for (int i = 0; i <= j; i++) {
+      precision_t sum = 0.0;
+
       for (int k = 0; k < i; k++) {
-        sum += (Lower->values.prec_data[i][k] * Upper->values.prec_data[k][j]);
+        sum += Lower->values.prec_data[i][k] * Upper->values.prec_data[k][j];
       }
+
       Upper->values.prec_data[i][j] = A->values.prec_data[i][j] - sum;
     }
+
+    if (fabs(Upper->values.prec_data[j][j]) < 1e-12) {
+      fprintf(stderr, "Error: Zero pivot in LU_decomp.\n");
+      exit(EXIT_FAILURE);
+    }
+
     for (int i = j + 1; i < N; i++) {
-      sum = 0.0;
+      precision_t sum = 0.0;
+
       for (int k = 0; k < j; k++) {
-        sum += (Lower->values.prec_data[i][k] * Upper->values.prec_data[k][j]);
+        sum += Lower->values.prec_data[i][k] * Upper->values.prec_data[k][j];
       }
+
       Lower->values.prec_data[i][j] =
-          (A->values.prec_data[i][j] - sum) / (Upper->values.prec_data[j][j]);
+          (A->values.prec_data[i][j] - sum) / Upper->values.prec_data[j][j];
     }
   }
 }
@@ -597,6 +658,15 @@ precision_t determinant(Matrix *M) {
   if (M->nrows != M->ncols) {
     fprintf(stderr,
             "Error: Given matrix in determinant function is not square.");
+    exit(EXIT_FAILURE);
+  }
+  if (M == NULL) {
+    fprintf(stderr, "Error: Matrix is NULL in determinant.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (M->dtype != PREC) {
+    fprintf(stderr, "Error: determinant requires a PREC matrix.\n");
     exit(EXIT_FAILURE);
   }
 
@@ -612,27 +682,39 @@ precision_t determinant(Matrix *M) {
   for (int i = 0; i < M->nrows; i++) {
     det *= Upper->values.prec_data[i][i];
   }
+
+  free_matrix(Lower);
+  free_matrix(Upper);
   return det;
 }
 
 Vector *lin_system_LU_decomp(Matrix *A, Vector *B) {
   // Function to solve AX=B
+  if (A == NULL || B == NULL) {
+    fprintf(stderr, "Error: NULL input in lin_system_LU_decomp.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (A->dtype != PREC || B->dtype != PREC) {
+    fprintf(stderr,
+            "Error: lin_system_LU_decomp requires PREC matrix and vector.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (A->nrows != A->ncols) {
+    fprintf(stderr, "Error: Matrix A in lin_system_LU_decomp is not square.\n");
+    exit(EXIT_FAILURE);
+  }
+
+  if (A->nrows != B->size) {
+    fprintf(stderr, "Error: Matrix A and Vector B have unequal sizes.\n");
+    exit(EXIT_FAILURE);
+  }
 
   precision_t sum;
   int N = A->nrows;
 
   Vector *X = zero_vector(PREC, B->size);
-
-  if (A->nrows != A->ncols) {
-    fprintf(stderr,
-            "Error: \"A\" Matrix in lin_system_gauss_elim not square.\n");
-    exit(EXIT_FAILURE);
-  }
-  if (A->nrows != B->size) {
-    fprintf(stderr,
-            "Error: Matrix \"A\" and Vector \"B\" have unequal sizes. \n");
-    exit(EXIT_FAILURE);
-  }
 
   Matrix *Upper = zeros_matrix(PREC, A->nrows, A->ncols);
   Matrix *Lower = zeros_matrix(PREC, A->nrows, A->ncols);
@@ -661,6 +743,10 @@ Vector *lin_system_LU_decomp(Matrix *A, Vector *B) {
     X->values.prec_data[i] =
         (Z->values.prec_data[i] - sum) / (Upper->values.prec_data[i][i]);
   }
+
+  free_matrix(Upper);
+  free_matrix(Lower);
+  free_vector(Z);
   return X;
 }
 

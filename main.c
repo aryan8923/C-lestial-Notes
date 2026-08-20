@@ -33,6 +33,16 @@ int main() {
   gettimeofday(&start, NULL);
   // ------------------------------------------------------------------------------------------------------
   //   CODE BETWEEEN THESE LINES
+  precision_t raw_data[3][3] = {
+      {6.0, 2.0, 3.0}, {0.0, 0.0, 4.0}, {2.0, 0.0, 0.0}};
+  Matrix *A = Array2d_to_Matrix_prec(3, 3, raw_data);
+
+  printf("Matrix A: \n");
+  view_matrix(A);
+
+  Matrix *inv_A = inverse_matrix(A);
+  printf("Inverse: \n");
+  view_matrix(inv_A);
 
   // ------------------------------------------------------------------------------------------------------
 
