@@ -58,7 +58,7 @@ A decimal number can be separated into integer part + fractional part.  For the 
 $$0.125 \times 2 = 0.25 \to 0 \quad
 0.25 \times 2 = 0.5 \to 0 \quad
 0.5 \times 2 = 1.0 \to 1$$
-So $(0.125)_{10}=(001)_{2}$. 
+So $(0.125)_{10}=(001)_{2}$ . 
 
 Now combine the two parts: $1010101.001$ and note that the decimal needs to move 6 places left for it to be in normalised form. So, in normalised form: $(1.010101001)_{2} \times 2^6$ and hence the exponent is 6.
 
