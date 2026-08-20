@@ -54,7 +54,7 @@ I will use the following example to illustrate how to convert a real number to b
 
 So lets **convert 85.125 to IEEE-754 single precision**.
 
-A decimal number can be separated into integer part + fractional part.  For the integer part, ordinary decimal-to-binary conversion can be used. So $(85)_{10} = (1010101)_{2}$ . For the fractional part, repeatedly multiply by 2 , take the bit appearing before the decimal point and continue with the remaining fractional part: 0.125 × 2 = 0.25 → 0 0.25 × 2 = 0.5 → 0 0.5 × 2 = 1.0 → 1 So $(0.125)_{10} = (001)_{2}$ .
+A decimal number can be separated into integer part + fractional part.  For the integer part, ordinary decimal-to-binary conversion can be used. So $(85)\_{10} = (1010101)\_{2}$ . For the fractional part, repeatedly multiply by 2 , take the bit appearing before the decimal point and continue with the remaining fractional part: 0.125 × 2 = 0.25 → 0 0.25 × 2 = 0.5 → 0 0.5 × 2 = 1.0 → 1 So $(0.125)\_{10} = (001)\_{2}$ .
 
 Now combine the two parts: $1010101.001$ and note that the decimal needs to move 6 places left for it to be in normalised form. So, in normalised form: $(1.010101001)_{2} \times 2^6$ and hence the exponent is 6.
 
