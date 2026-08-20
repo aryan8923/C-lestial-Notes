@@ -29,22 +29,20 @@ Thus, the important parameters are $\boxed{\beta,\quad p,\quad e_{\min},\quad e_
 **General form of a floating-point number**: $\boxed{\pm d_0.d_1d_2\cdots d_{p-1}\times\beta^e}$ where $0\leq d_i<\beta.$
 
 Equivalently,
-$$
-\boxed{
+$$\boxed{
 \pm
 \left(
 d_0+d_1\beta^{-1}+d_2\beta^{-2}
 +\cdots+d_{p-1}\beta^{-(p-1)}
 \right)\beta^e
-}
-$$
+}$$
 
 with $0\leq d_i<\beta.$ The quantity $d_0.d_1d_2\cdots d_{p-1}$ is called the **significand** (older terms: fraction/mantissa). Precision $p$ specifies the number of digits in the significand.
 
 
 **Example**: Say for a representation, $\beta=10,p=3$ then the real number $0.1$ is written as $1.00\times10^{-1}$ with base $=10$, precision $p=3$, significand $=1.00$, exponent $=-1$. But if base 2, then 0.1 has infinite binary representation and cannot be represented exactly using a finite number of binary digits. $0.1_{{10}} = 0.0001100110011001100110011\ldots_2$. Thus, a finite-precision binary floating-point system must approximate $0.1$. (Conversion to binary is discussed in the next subsection.)
 
-**Normalisation**: Floating point representation of a real number is not unique so we normalise by keeping the leading digit $d_{0}$ to be non-zero.  $0.1$ can be represented as $0.01\times 10^1$and $1.00 \times 10^{-1}$, but the later form is the normalised form. Due to the leading 1 digit, a normalized representation cannot represent zero. So 0 is treated specially as $fl(0) = 1.0 \times \beta^{e_{\min}-1}$
+**Normalisation**: Floating point representation of a real number is not unique so we normalise by keeping the leading digit $d_{0}$ to be non-zero.  $0.1$ can be represented as $0.01\times 10^1$ and $1.00 \times 10^{-1}$, but the later form is the normalised form. Due to the leading 1 digit, a normalized representation cannot represent zero. So 0 is treated specially as $fl(0) = 1.0 \times \beta^{e_{\min}-1}$
 
 **Note**: Many hardware floating point units use the IEEE-754 standard and in it the number of explicitly stored fraction bits is not the same as the effective precision because normalized binary numbers have an implicit leading $1$.
 
@@ -56,12 +54,10 @@ I will use the following example to illustrate how to convert a real number to b
 
 So lets **convert 85.125 to IEEE-754 single precision**.
 
-A decimal number can be separated into integer part + fractional part.  For the integer part, ordinary decimal-to-binary conversion can be used. So $(85)_{10}=(1010101)_{2}$. For the fractional part, repeatedly multiply by $2$, take the bit appearing before the decimal point and continue with the remaining fractional part: 
-$$
-0.125 \times 2 = 0.25 \to 0 \quad
+A decimal number can be separated into integer part + fractional part.  For the integer part, ordinary decimal-to-binary conversion can be used. So $(85)_{10}=(1010101)_{2}$ . For the fractional part, repeatedly multiply by $2$, take the bit appearing before the decimal point and continue with the remaining fractional part: 
+$$0.125 \times 2 = 0.25 \to 0 \quad
 0.25 \times 2 = 0.5 \to 0 \quad
-0.5 \times 2 = 1.0 \to 1
-$$
+0.5 \times 2 = 1.0 \to 1$$
 So $(0.125)_{10}=(001)_{2}$. 
 
 Now combine the two parts: $1010101.001$ and note that the decimal needs to move 6 places left for it to be in normalised form. So, in normalised form: $(1.010101001)_{2} \times 2^6$ and hence the exponent is 6.
