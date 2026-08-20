@@ -70,7 +70,7 @@ Without spaces: $010000101010101001000\dots$ or in hexadecimal: 0x42AA4000
 
 ### Real Numbers to Exactly Representable
 
-There are two fundamental reasons.
+There are two fundamental reasons behind why a real number might not be exactly representable.
 
 1. The number requires infinitely many digits. For example 0.1 in binary requires infinite bits to store exactly. Fundamentally a precision/rounding issue.
 
