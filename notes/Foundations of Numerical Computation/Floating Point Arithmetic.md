@@ -42,7 +42,7 @@ with $0\leq d_i<\beta.$ The quantity $d_0.d_1d_2\cdots d_{p-1}$ is called the **
 
 **Example**: Say for a representation, $\beta=10,p=3$ then the real number $0.1$ is written as $1.00\times10^{-1}$ with base $=10$, precision $p=3$, significand $=1.00$, exponent $=-1$. But if base 2, then 0.1 has infinite binary representation and cannot be represented exactly using a finite number of binary digits. $0.1_{{10}} = 0.0001100110011001100110011\ldots_2$. Thus, a finite-precision binary floating-point system must approximate $0.1$. (Conversion to binary is discussed in the next subsection.)
 
-**Normalisation**: Floating point representation of a real number is not unique so we normalise by keeping the leading digit $d_{0}$ to be non-zero.  $0.1$ can be represented as $0.01\times 10^1$ and $1.00 \times 10^{-1}$, but the later form is the normalised form. Due to the leading 1 digit, a normalized representation cannot represent zero. So 0 is treated specially as $fl(0) = 1.0 \times \beta^{e_{\min}-1}$
+**Normalisation**: Floating point representation of a real number is not unique so we normalise by keeping the leading digit $d_{0}$ to be non-zero.  $0.1$ can be represented as $0.01\times 10^1$ and $1.00 \times 10^{-1}$, but the latter form is the normalised form. Due to the leading 1 digit, a normalized representation cannot represent zero. So 0 is treated specially as $fl(0) = 1.0 \times \beta^{e_{\min}-1}$
 
 **Note**: Many hardware floating point units use the IEEE-754 standard and in it the number of explicitly stored fraction bits is not the same as the effective precision because normalized binary numbers have an implicit leading $1$.
 
@@ -52,7 +52,7 @@ I will use the following example to illustrate how to convert a real number to b
 
 ### Real Number to IEEE-754 Single Precision Conversion
 
-So lets **convert 85.125 to IEEE-754 single precision**.
+So let's **convert 85.125 to IEEE-754 single precision**.
 
 A decimal number can be separated into integer part + fractional part.  For the integer part, ordinary decimal-to-binary conversion can be used. So $(85)\_{10} = (1010101)\_{2}$ . For the fractional part, repeatedly multiply by 2 , take the bit appearing before the decimal point and continue with the remaining fractional part: 0.125 × 2 = 0.25 → 0 0.25 × 2 = 0.5 → 0 0.5 × 2 = 1.0 → 1 So $(0.125)\_{10} = (001)\_{2}$ .
 
@@ -60,7 +60,7 @@ Now combine the two parts: $1010101.001$ and note that the decimal needs to move
 
 Since the leading 1 in normalised form becomes implicit, storing it becomes redundant and so the computer stores only the bits after the decimal. Note that since fraction 23 bits in single precision, we need to add the rest of the 0s. So finally, mantissa is stored as $010101001000\dots$ 
 
-Now, the exponent is 6 but since 8 bits assigned to the exponent also needs to take into account negative exponents, the stored bits represent from -127 to 127. So 6 is represented by $127+6 = 133 = (10000101)_{2}$. This is how the exponent is stored in the computer. 
+Now, the exponent is 6 but since 8 bits assigned to the exponent also needs to take into account negative exponents, the stored bits represent from -126 to 127. So 6 is represented by $127+6 = 133 = (10000101)_{2}$. This is how the exponent is stored in the computer. 
 
 85.125 is a positive real number so the sign bit is 0.
 
